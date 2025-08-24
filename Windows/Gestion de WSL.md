@@ -1,0 +1,7 @@
+# Gestion de WSL
+
+WSL est une fonctionnalité qui permet d'exécuter les binaires Linux de manière native sur Windows 10 et Windows Server 2019. Il était à l'origine destiné aux développeurs qui avaient besoin d'exécuter Bash, Ruby et les outils de ligne de commande Linux natifs tels que sed, awk, grep, etc., directement sur leur poste de travail Windows. La deuxième version de WSL, publiée en mai 2019, a introduit un véritable noyau Linux utilisant un sous-ensemble de fonctionnalités Hyper-V.
+
+WSL peut être installé en exécutant la commande PowerShell `Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux` en tant qu'administrateur. Une fois cette fonctionnalité activée, nous pouvons soit télécharger une distribution Linux à partir du Microsoft Store et l'installer, soit télécharger manuellement la distribution Linux de notre choix et la décompresser et l'installer à partir de la ligne de commande.
+
+WSL installe une application appelée Bash.exe, qui peut être exécutée en tapant simplement `bash` dans une console Windows pour faire agnaitre un shell Bash. Nous avons l'apparence et la convivialité d'un hôte Linux à partir de ce shell, y compris la structure d'annuaire Linux standard.
