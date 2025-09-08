@@ -7,7 +7,7 @@ La configuration se passe en 3 étapes :
 * S’inscrire à Windows Hello Entreprise
 
 Source : https://learn.microsoft.com/fr-fr/windows/security/identity-protection/hello-for-business/deploy/hybrid-cloud-kerberos-trust?tabs=intune#deploy-microsoft-entra-kerberos
-## 1. Création du AzureADKerberos serveur sur l'AD
+## 1) Création du AzureADKerberos serveur sur l'AD
 
 ```
 # First, ensure TLS 1.2 for PowerShell gallery access.
@@ -35,9 +35,30 @@ Pour vérifier si la commande a bien fonctionné, il faut vérifier la présence
 Source : https://learn.microsoft.com/fr-fr/entra/identity/authentication/howto-authentication-passwordless-security-key-on-premises#install-the-azureadhybridauthenticationmanagement-module
 
 
-## 1. Configurer les paramètres de stratégie Windows Hello Entreprise
+## 2) Configurer les paramètres de stratégie Windows Hello Entreprise
 
-Pour cela, il faut créer une stratégie 
+Tout d'abord, il faut activer l'utilisation de Windows Hello Entreprise dans paramètres d'inscriptions sur intune : 
+
+* Configurer Windows Hello Entreprise : Activé
+* Utiliser un module de plateforme sécurisé (TPM) : Obligatoire
+* Autres options : En fontion des préférences
+
+Ensuite, il faut créer un nouveau profile de configuration :
+
+* Plateforme : Windows 10 et versions ultérieures
+* Type de profil : Catalogue de paramètres
+    * Nom : Windows Hello - Keberos Cloud
+    * Paramètres : Windows Hello Entreprise
+        * Autoriser l'utilisation de la biométrie : True
+        * Caractères spéciaux (utilisateur) : Permettre l'utilisation
+        * Chiffres (utilisateur) : Permettre l'utilisation
+        * Exiger un appareil de sécurité (utilisateur) : True
+        * Les fonctionnalités de reconnaissance faciale utilisent la détection d'usurpation améliorée : True
+        * Lettres majuscules (utilisateur) : Obligatoire
+        * Lettres minuscules (utilisateur) : Obligatoire
+        * Longueur minimale du code confidentiel (utilisateur) : 8
+        * Utiliser l’approbation cloud pour l’authentification locale : True
+        * Utiliser Windows Hello For Business (utilisateur) : True
 
 
-## 1. S’inscrire à Windows Hello Entreprise
+## 3) S’inscrire à Windows Hello Entreprise
