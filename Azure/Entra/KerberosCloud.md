@@ -23,3 +23,5 @@ $domainCred = Get-Credential -Message 'An Active Directory user who is a member 
 # and then publish it to Azure Active Directory.
 Set-AzureADKerberosServer -Domain $domain -CloudCredential $cloudCred -DomainCredential $domainCred
 ```
+
+Source : https://learn.microsoft.com/fr-fr/entra/identity/authentication/howto-authentication-passwordless-security-key-on-premises#install-the-azureadhybridauthenticationmanagement-module
