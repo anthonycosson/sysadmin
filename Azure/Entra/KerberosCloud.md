@@ -71,6 +71,7 @@ Une fois qu’un utilisateur s’est connecté, le processus d’inscription Win
 1. Après une authentification multifacteur réussie, le flux d’approvisionnement demande à l’utilisateur à créer et de valider un code confidentiel. Ce code confidentiel doit respecter toutes les stratégies de complexité du code confidentiel configurées sur l’appareil
 1. Le reste de l’approvisionnement inclut la demande, par Windows Hello Entreprise, d'une paire de clés asymétriques pour l’utilisateur, de préférence à partir du module TPM (ou requis si définie explicitement via la stratégie). Une fois la paire de clés acquise, Windows communique avec le fournisseur d’identité pour inscrire la clé publique. Une fois l’inscription de clé terminée, Windows Hello Entreprise provisionnement informe l’utilisateur qu’il peut utiliser son code confidentiel pour se connecter. L’utilisateur peut fermer l’application d’approvisionnement et accéder à son bureau
 
+Source : https://learn.microsoft.com/fr-fr/windows/security/identity-protection/hello-for-business/deploy/hybrid-cloud-kerberos-trust?tabs=intune#user-experience
 
 ## 4) Vérifier si ça fonctionne correctement 
 
