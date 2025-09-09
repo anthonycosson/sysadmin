@@ -75,8 +75,7 @@ Source : https://learn.microsoft.com/fr-fr/windows/security/identity-protection/
 
 ## 4) Vérifier si ça fonctionne correctement 
 
-Vous pouvez déterminer la status de la configuration requise case activée en affichant le journal d’administration De l’inscription des appareils utilisateur sous Journaux > des applications et des servicesMicrosoft > Windows.
+La commande `dsregcmd.exe /status` doit retourner dans la partie "SSO State" les valeurs ci-dessous :
 
-Ces informations sont également disponibles à l’aide de la commande `dsregcmd.exe /status`
-
-Le prérequis d’approbation Kerberos cloud case activée détecte si l’utilisateur a un TGT partiel avant d’autoriser le démarrage de l’approvisionnement. L’objectif de cette case activée est de vérifier si Microsoft Entra Kerberos est configuré pour le domaine et le locataire de l’utilisateur. Si Microsoft Entra Kerberos est configuré, l’utilisateur reçoit un TGT partiel lors de la connexion avec l’une de ses autres méthodes de déverrouillage. Cette case activée a trois états : Oui, Non et Non testé. L’état Non testé est signalé si l’approbation Kerberos cloud n’est pas appliquée par la stratégie ou si l’appareil est Microsoft Entra joint.
+* OnPremTgt : YES
+* CloudTgt : YES
