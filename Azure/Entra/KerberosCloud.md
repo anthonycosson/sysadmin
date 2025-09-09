@@ -79,3 +79,5 @@ La commande `dsregcmd.exe /status` doit retourner dans la partie "SSO State" les
 
 * OnPremTgt : YES
 * CloudTgt : YES
+
+Source : https://learn.microsoft.com/fr-fr/entra/identity/devices/troubleshoot-device-dsregcmd#sso-state
