@@ -6,7 +6,7 @@ Tous d'abord il faut installer OpenSSL que ce soit sur Linux, Mac ou Windows
 
 ## Générer un CSR
 
-`sudo openssl req -sha256 -nodes -newkey rsa:2048 -keyout domaine.tld.key -out domaine.tld.csr`
+`openssl req -nodes -newkey rsa:2048 -sha256 -keyout domaine.key -out domaine.csr -utf8`
 
 Répondre aux questions suivantes :
 
