@@ -21,9 +21,7 @@ Répondre aux questions suivantes :
 * **Optional Compagny Name** : On laisse vide
 
 
-Si d'autres questions sont posées, elles peuvent être ignorées en laissant le champs vide et en appuyant sur "Enter".
-
-Attention, en plus du .CSR il est important de garder le fichier .key ainsi que le mot de passe utilisé.
+Attention, en plus du .CSR il est important de garder le fichier .key.
 
 ## Transformer le .crt en .PFX
 
