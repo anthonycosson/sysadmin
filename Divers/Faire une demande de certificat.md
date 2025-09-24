@@ -11,10 +11,15 @@ Tous d'abord il faut installer OpenSSL que ce soit sur Linux, Mac ou Windows
 Répondre aux questions suivantes :
 
 * **Country name** : FR
+* **State or Province** : Ile-de-france
 * **Locality name** : Paris
-* **Organisation Name** : Le nom du client
+* **Organization Name** : Le nom du client
+* **Organization Unit Name** : IT Department 
 * **Common name** : le FQDN complet ou le wildcard (exemple : sous-domaine.domaine.tld ou *.domaine.tld)
-* **Password** : Définir le mot de passe
+* **Email** : On laisse vide
+* **Password** : On laisse vide
+* **Optional Compagny Name** : On laisse vide
+
 
 Si d'autres questions sont posées, elles peuvent être ignorées en laissant le champs vide et en appuyant sur "Enter".
 
