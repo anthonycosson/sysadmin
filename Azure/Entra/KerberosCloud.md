@@ -81,3 +81,10 @@ La commande `dsregcmd.exe /status` doit retourner dans la partie "SSO State" les
 * CloudTgt : YES
 
 Source : https://learn.microsoft.com/fr-fr/entra/identity/devices/troubleshoot-device-dsregcmd#sso-state
+
+## 5) Si l'utilisateur à un problème à la création du code PIN 
+
+`Remove-Item -Path "HKLM:\SOFTWARE\Microsoft\Policies\PassportForWork" -Recurse``
+
+Cela permet de supprimer l'ancienne configuration et ainsi pouvoir le refaire.
+
