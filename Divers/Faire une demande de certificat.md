@@ -31,7 +31,7 @@ Répondre aux questions suivantes :
 
 Attention, en plus du .CSR il est important de garder le fichier .key.
 
-## ## Créer un .crt en intégrant le .crt et le.pem dedans
+## Créer un .crt en intégrant le .crt et le.pem dedans
 
 `cat domain.name.crt domain.name.pem > fullchain.pem`
 
