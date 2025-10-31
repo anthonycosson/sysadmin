@@ -23,11 +23,11 @@ Répondre aux questions suivantes :
 
 Attention, en plus du .CSR il est important de garder le fichier .key.
 
-## Transformer le .crt en .PFX
+## Transformer le .crt en .PFX et intégrer le .pem dedans
 
 Pour cela il faut récupérer le certificat .crt puis le fichier .key qui a été généré en même temps que le CSR dans le même répertoire ou l'on exécute la commande ci-dessous : 
 
- `openssl pkcs12 -export -out domain.name.pfx -inkey domain.name.key -in domain.name.crt`
+ `openssl pkcs12 -export -out domain.name.pfx -inkey domain.name.key -in domain.name.crt -certfile domain.name.pem`
 
 
 ## Transformer un .PFX en .p12
