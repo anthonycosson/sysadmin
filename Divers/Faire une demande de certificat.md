@@ -23,7 +23,13 @@ Répondre aux questions suivantes :
 
 Attention, en plus du .CSR il est important de garder le fichier .key.
 
-## Transformer le .crt en .PFX et intégrer le .pem dedans
+## ## Créer un .crt en intégrant le .crt et le.pem dedans
+
+`cat domain.name.crt domain.name.pem > fullchain.crt`
+
+Aujourd'hui le standard est le .pem et plus le .crt donc il est possible de mettre le fichier .pem directement.
+
+## Créer un .PFX en intégrant le .crt, le .key et .pem dedans 
 
 Pour cela il faut récupérer le certificat .crt puis le fichier .key qui a été généré en même temps que le CSR dans le même répertoire ou l'on exécute la commande ci-dessous : 
 
