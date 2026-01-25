@@ -2,7 +2,7 @@
 
 ## Introduction
 
-![alt text](</Windows/Images/powershell_vs_cmd.png>)
+![alt text](<../assets/powershell_vs_cmd.png>)
 
 
 ### Powershell

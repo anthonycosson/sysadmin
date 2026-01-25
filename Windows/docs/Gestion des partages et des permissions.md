@@ -41,7 +41,7 @@ Le niveau d'accès aux ressources est répertorié après chaque utilisateur. Le
 * (NP): do not propagate inherit
 * (I): permission inherited from parent container
 
-![alt text](<Images/permissions.png>)
+![alt text](<../assets/permissions.png>)
 
 Les autorisations d'accès de base sont les suivantes : 
 
@@ -66,4 +66,4 @@ Pour supprimer les droits on utile la commande `icacls c:\users /remove joe`.
 
 En GUI cela permet aussi de voir les sessions ouvertes ainsi que les fichiers.
 
-![alt text](<Images/partages.png>)
+![alt text](<../assets/partages.png>)
