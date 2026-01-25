@@ -1,4 +1,0 @@
-Changer l'IP et le port port pour correspondre à la machine de l'attaquant.
-Trouver un site sur lequel il est possible d'uploader le reverse shell.
-Naviguer sur le site web pour le faire executer le reverse shell.
-Si le fichier ne s'upload pas il est possible que le site bloque certaines extension dans ce cas il faut essayer de la modifier pour en trouver une qui soit accepté.
