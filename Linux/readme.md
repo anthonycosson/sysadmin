@@ -10,16 +10,21 @@
 
 ## Mise à jour du système
 
-`apt update && apt full-upgrade -y`
+```
+apt update && apt full-upgrade -y
+```
 
 ## Permettre le connexion directement depuis le compte root avec mot de passe (Pas forcément recommandé)
 
-`sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config`\
-`systemctl restart ssh`
-
+```
+sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config`\
+systemctl restart ssh
+```
 ## Installations de quelques outils intéréssants 
 
-`apt install curl net-tools -y`
+```
+apt install curl net-tools -y
+```
 
 ## Création de fichier de swap
 
