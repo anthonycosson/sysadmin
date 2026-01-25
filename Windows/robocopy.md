@@ -1,6 +1,7 @@
 #Robocopy
 
-```ROBOCOPY "Source" "Destination" /E /XO /ETA /w:1 /R:1
+```
+ROBOCOPY "Source" "Destination" /E /XO /ETA /w:1 /R:1
 ```
 
 ## Default options
