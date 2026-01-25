@@ -1,5 +1,3 @@
-# Docker
-
 # Présentation
 
 Docker fonctionne grâce à plusieurs éléments : 
@@ -85,7 +83,7 @@ name : Permet de définir un nom manuellement
 
 external : Permet de dire qu’on ne doit pas créer le volume car il existe déjà. un message d’erreur apparaitra si ça n’est pas le cas.
 
-## Networks :
+### Networks :
 
 Permet déclarer les réseaux à créer ou utiliser pour la stack.
 
@@ -97,5 +95,17 @@ driver : permet de définir si on veut que ce soit un réseau Bridge, host, none
 
 enable_ipv4/6 : true or false pour activer ou pas l’ipv4 ou 6.
 
+# Installation de Docker
 
-
+```
+apt install ca-certificates
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+ apt update
+ apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+ ```
