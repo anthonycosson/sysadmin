@@ -53,5 +53,5 @@ Aujourd'hui le standard est le .pem mais on peut aussi le mettre en .crt aussi.
 
 Il est possible de changer l'extension simplement en le renommant mais il est aussi possible d'utiliser la commande suivante :
 
-` openssl pkcs12 -export -in domaine.name.pfx -out domaine.name.p12`
+` openssl pkcs12 -in domaine.name.pfx -out domaine.name.p12 -nodes`
 
