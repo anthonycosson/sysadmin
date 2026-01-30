@@ -31,12 +31,6 @@ Répondre aux questions suivantes :
 
 Attention, en plus du .CSR il est important de garder le fichier .key.
 
-## Créer un .crt en intégrant le .crt et le.pem dedans
-
-`cat domain.name.crt domain.name.pem > fullchain.pem`
-
-Aujourd'hui le standard est le .pem mais on peut aussi le mettre en .crt aussi.
-
 ## Créer un .PFX en intégrant le .crt, le .key et .pem dedans 
 
 Pour cela il faut récupérer le certificat .crt puis le fichier .key qui a été généré en même temps que le CSR dans le même répertoire ou l'on exécute la commande ci-dessous : 
@@ -44,7 +38,18 @@ Pour cela il faut récupérer le certificat .crt puis le fichier .key qui a ét�
  `openssl pkcs12 -export -out domain.name.pfx -inkey domain.name.key -in domain.name.crt -certfile domain.name.pem`
 
 
-## Transformer un .PFX en .p12
+## Bonus
+
+### Créer un .crt en intégrant le .crt et le.pem dedans
+
+`cat domain.name.crt domain.name.pem > fullchain.pem`
+
+Aujourd'hui le standard est le .pem mais on peut aussi le mettre en .crt aussi.
+
+
+
+
+### Transformer un .PFX en .p12
 
 Il est possible de changer l'extension simplement en le renommant mais il est aussi possible d'utiliser la commande suivante :
 
