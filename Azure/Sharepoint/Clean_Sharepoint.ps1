@@ -1,5 +1,7 @@
 # Créer une application d'entreprise et récupération du client ID de l'application
 ## > Register-PnPEntraIDAppForInteractiveLogin -ApplicationName "PnP PowerShell" -SharePointDelegatePermissions "AllSites.FullControl" -Tenant xxx.onmicrosoft.com
+## > Il faut aussi ce donner sur les sur le sharepoint cible.
+
 
 # Variable à modifier
 $sourceSite = "https://XXX.sharepoint.com/sites/XXXX"
