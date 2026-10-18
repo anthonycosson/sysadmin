@@ -12,7 +12,8 @@ Ce sont des notes de terrain, écrites pour être retrouvées vite. Elles ne rem
 | [🐧 linux](linux/) | Installation Debian, utilisateurs et droits, partages |
 | [☁️ microsoft-365](microsoft-365/) | Entra ID, Exchange Online, SharePoint |
 | [📦 virtualisation](virtualisation/) | Docker, Proxmox |
-| [🌐 reseau](reseau/) | Pare-feu WatchGuard, certificats, impression, SMTP |
+| [🌐 reseau](reseau/) | Pare-feu WatchGuard, impression, SMTP |
+| [🔒 web](web/) | Certificats, noms de domaine, reverse proxy |
 | [🕵️ pentest](pentest/) | Cheatsheet pentest, de la reconnaissance à l'élévation de privilèges |
 
 ## 🏷️ Conventions
