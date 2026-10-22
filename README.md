@@ -10,7 +10,7 @@ Ce sont des notes de terrain, écrites pour être retrouvées vite. Elles ne rem
 |---|---|
 | [🪟 windows](windows/) | PowerShell, sécurité, partages et permissions, services, sessions, outils |
 | [🐧 linux](linux/) | Installation Debian, utilisateurs et droits, partages |
-| [☁️ microsoft-365](microsoft-365/) | Entra ID, Exchange Online, SharePoint |
+| [☁️ microsoft-365](microsoft-365/) | Entra ID, Exchange Online, SharePoint, sécurité du tenant |
 | [📦 virtualisation](virtualisation/) | Docker, Proxmox |
 | [🌐 reseau](reseau/) | Pare-feu WatchGuard, impression, SMTP |
 | [🔒 web](web/) | Certificats, noms de domaine, reverse proxy |

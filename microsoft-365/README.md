@@ -9,6 +9,10 @@
 
 - [export-mailbox.ps1](exchange-online/export-mailbox.ps1) : exporter la liste des boîtes utilisateurs et partagées avec leur taille
 
+## 🛡️ Sécurité
+
+- [Sécuriser un tenant Microsoft 365](securite/securiser-un-tenant.md) : procédure de renforcement du tenant (achats en libre-service, viral sign-up…)
+
 ## 📁 SharePoint
 
 - [clean-sharepoint.ps1](sharepoint/clean-sharepoint.ps1) : limiter et purger l'historique des versions de fichiers d'un site avec PnP PowerShell
