@@ -71,10 +71,12 @@ Source : https://learn.microsoft.com/fr-fr/microsoft-365/commerce/subscriptions/
 
 **Paramètre concerné :** `allowEmailVerifiedUsersToJoinOrganization` de la stratégie d'autorisation Entra ID.
 
-**Rôle minimum :** Administrateur de la stratégie d'autorisation (scope Graph `Policy.ReadWrite.Authorization`).
+**Rôle minimum :** Administrateur de la stratégie d'autorisation.
 
 ```powershell
-Connect-MgGraph -Scopes "Policy.ReadWrite.Authorization"
+Install-Module Microsoft.Graph -Scope CurrentUser
+Import-Module Microsoft.Graph
+Connect-MgGraph
 
 $params = @{
     allowEmailVerifiedUsersToJoinOrganization = $false
