@@ -10,7 +10,7 @@ Procédure de renforcement d'un tenant Microsoft 365, classée par domaine. Chaq
 3. [👤 Identités et inscriptions](#-identités-et-inscriptions)
    - [Désactiver le « viral sign-up »](#désactiver-le--viral-sign-up-)
 4. [💻 Appareils](#-appareils)
-   - [Configurer Windows LAPS](#configurer-windows-laps)
+   - [Configurer Windows LAPS](#configurer-windows-laps) (et désactiver les comptes Administrator et Invité)
 
 ## Prérequis
 
@@ -109,7 +109,7 @@ Source : https://learn.microsoft.com/fr-fr/entra/identity/users/directory-self-s
 
 **Architecture cible :**
 
-- le compte `Administrator` intégré est **désactivé** ;
+- les comptes intégrés `Administrator` et `Guest` (Invité) sont **désactivés** ;
 - un compte admin local dédié (ex. `lapsadmin`) est **créé et géré par LAPS** ;
 - le groupe local `Administrateurs` ne contient **que** ce compte et le rôle Entra *Administrateurs d'appareils*.
 
@@ -151,14 +151,17 @@ Intune → **Sécurité des points de terminaison** → **Protection du compte**
 
 > ℹ️ On cible un **nouveau compte** et non le compte `Administrator` intégré, puisque celui-ci est désactivé à l'étape suivante.
 
-#### 3. Désactiver le compte Administrator intégré
+#### 3. Désactiver les comptes Administrator et Invité intégrés
 
 Intune → **Appareils** → **Configuration** → **Créer** → Plateforme `Windows 10 et ultérieur`, Type `Catalogue des paramètres` :
 
 ```
 Local Policies Security Options
-└─ Accounts: Enable Administrator Account Status = Disable
+├─ Accounts: Enable Administrator Account Status = Disable
+└─ Accounts: Enable Guest Account Status = Disable
 ```
+
+> ℹ️ Le compte Invité est désactivé par défaut sur Windows. La stratégie garantit qu'il le reste, même si quelqu'un le réactive à la main.
 
 **Affectation :** les mêmes groupes d'appareils que la stratégie LAPS.
 
@@ -187,7 +190,7 @@ Invoke-LapsPolicyProcessing
 Get-WinEvent -LogName "Microsoft-Windows-LAPS/Operational" -MaxEvents 10 |
     Select-Object TimeCreated, Id, Message
 
-# Le compte Administrator doit être désactivé et lapsadmin présent
+# Administrator et Invité doivent être désactivés, lapsadmin présent et activé
 Get-LocalUser | Select-Object Name, Enabled
 
 # Seuls les membres définis à l'étape 4 doivent apparaître
