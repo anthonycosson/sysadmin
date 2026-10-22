@@ -69,26 +69,32 @@ Source : https://learn.microsoft.com/fr-fr/microsoft-365/commerce/subscriptions/
 
 **Pourquoi :** le « viral sign-up » permet à n'importe qui possédant une adresse e-mail de votre domaine de rejoindre le tenant en vérifiant simplement son adresse, sans qu'un administrateur ait créé le compte. Ces comptes échappent au provisionnement normal (MFA, licences, accès conditionnel).
 
-**Paramètre concerné :** `allowEmailVerifiedUsersToJoinOrganization` de la stratégie d'autorisation Entra ID.
+**Paramètres concernés** (stratégie d'autorisation Entra ID) :
 
-**Rôle minimum :** Administrateur de la stratégie d'autorisation.
+| Paramètre | Ce qu'il bloque |
+|---|---|
+| `allowEmailVerifiedUsersToJoinOrganization` | Un utilisateur qui vérifie son adresse e-mail rejoint le tenant tout seul |
+| `allowedToSignUpEmailBasedSubscriptions` | Un utilisateur s'inscrit à un abonnement en libre-service avec son adresse e-mail |
+
+**Rôle minimum :** Administrateur de la stratégie d'autorisation (scope Graph `Policy.ReadWrite.Authorization`).
 
 ```powershell
 Install-Module Microsoft.Graph -Scope CurrentUser
 Import-Module Microsoft.Graph
-Connect-MgGraph
+Connect-MgGraph -Scopes "Policy.ReadWrite.Authorization"
 
 $params = @{
     allowEmailVerifiedUsersToJoinOrganization = $false
+    allowedToSignUpEmailBasedSubscriptions = $false
 }
+
 Update-MgPolicyAuthorizationPolicy -BodyParameter $params
 ```
 
-**Vérification :** la valeur doit être `False`.
+**Vérification :** les deux valeurs doivent être à `False`.
 
 ```powershell
-Get-MgPolicyAuthorizationPolicy |
-    Select-Object AllowEmailVerifiedUsersToJoinOrganization
+Get-MgPolicyAuthorizationPolicy | Select AllowEmailVerifiedUsersToJoinOrganization,AllowedToSignUpEmailBasedSubscriptions
 ```
 
 Source : https://learn.microsoft.com/fr-fr/entra/identity/users/directory-self-service-signup
