@@ -11,7 +11,7 @@
 
 ## 🛡️ Sécurité
 
-- [Sécuriser un tenant Microsoft 365](securite/securiser-un-tenant.md) : procédure de renforcement du tenant (achats en libre-service, viral sign-up…)
+- [Sécuriser un tenant Microsoft 365](securite/securiser-un-tenant.md) : procédure de renforcement du tenant (achats en libre-service, viral sign-up, Windows LAPS…)
 
 ## 📁 SharePoint
 
