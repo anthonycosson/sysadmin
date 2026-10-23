@@ -11,6 +11,15 @@ Procédure de renforcement d'un tenant Microsoft 365, classée par domaine. Chaq
    - [Désactiver le « viral sign-up »](#désactiver-le--viral-sign-up-)
 4. [💻 Appareils](#-appareils)
    - [Configurer Windows LAPS](#configurer-windows-laps) (et désactiver les comptes Administrator et Invité)
+5. [📧 Messagerie et antispam](#-messagerie-et-antispam)
+   - [Authentification des e-mails : SPF, DKIM et DMARC](#authentification-des-e-mails--spf-dkim-et-dmarc)
+   - [Stratégie de quarantaine](#stratégie-de-quarantaine)
+   - [Anti-hameçonnage](#anti-hameçonnage)
+   - [Anti-courrier indésirable](#anti-courrier-indésirable)
+   - [Anti-programme malveillant](#anti-programme-malveillant)
+   - [Pièces jointes fiables (Safe Attachments)](#pièces-jointes-fiables-safe-attachments)
+   - [Liens fiables (Safe Links)](#liens-fiables-safe-links)
+   - [Vérification de la partie messagerie](#vérification-de-la-partie-messagerie)
 
 ## Prérequis
 
@@ -22,10 +31,14 @@ Procédure de renforcement d'un tenant Microsoft 365, classée par domaine. Chaq
 |---|---|
 | `MSCommerce` | Stratégies d'achat en libre-service |
 | `Microsoft.Graph` | Stratégies d'autorisation Entra ID |
+| `ExchangeOnlineManagement` | Stratégies de protection de la messagerie |
+| `Microsoft.Online.SharePoint.PowerShell` | Paramètres du tenant SharePoint |
 
 ```powershell
 Install-Module MSCommerce
 Install-Module Microsoft.Graph -Scope CurrentUser
+Install-Module ExchangeOnlineManagement -Scope CurrentUser
+Install-Module Microsoft.Online.SharePoint.PowerShell -Scope CurrentUser
 ```
 
 ## 💳 Abonnements et achats
@@ -210,3 +223,458 @@ Sources :
 - https://learn.microsoft.com/fr-fr/entra/identity/devices/howto-manage-local-admin-passwords
 - https://learn.microsoft.com/fr-fr/mem/intune/protect/windows-laps-policy
 - https://learn.microsoft.com/fr-fr/mem/intune/protect/endpoint-security-account-protection-policy
+
+## 📧 Messagerie et antispam
+
+Cette partie suit l'ordre logique de traitement d'un e-mail : d'abord prouver que nos domaines sont légitimes (SPF, DKIM, DMARC), puis filtrer ce qui arrive (hameçonnage, spam, programmes malveillants) et enfin analyser les pièces jointes et les liens.
+
+**Licences :**
+
+| Fonctionnalité | Licence |
+|---|---|
+| SPF, DKIM, DMARC, anti-spam, anti-malware, usurpation (spoof) | Exchange Online Protection (inclus dans tout abonnement Exchange Online) |
+| Protection contre l'emprunt d'identité (VIP, domaines), pièces jointes fiables, liens fiables | **Microsoft Defender for Office 365 Plan 1** (inclus dans Microsoft 365 Business Premium et E5) |
+
+**Portail :** [security.microsoft.com](https://security.microsoft.com) → **E-mail et collaboration** → **Stratégies et règles** → **Stratégies de menace**.
+
+**Connexion PowerShell :**
+
+```powershell
+Install-Module ExchangeOnlineManagement -Scope CurrentUser
+Import-Module ExchangeOnlineManagement
+Connect-ExchangeOnline
+
+# Domaines acceptés du tenant, réutilisés dans les règles plus bas
+$domains = (Get-AcceptedDomain).DomainName
+```
+
+> ℹ️ **Alternative rapide :** les *Stratégies de sécurité prédéfinies* (Standard ou Strict) appliquent d'un coup les réglages recommandés par Microsoft. Elles passent **avant** les stratégies personnalisées. Cette procédure configure les stratégies à la main pour garder la main sur chaque réglage (VIP, quarantaine, exceptions).
+
+### Authentification des e-mails : SPF, DKIM et DMARC
+
+À faire pour **chaque domaine** qui envoie des e-mails. Les trois se complètent :
+
+| Protocole | Ce qu'il prouve |
+|---|---|
+| SPF | Le serveur qui envoie est autorisé à envoyer pour le domaine |
+| DKIM | Le message est signé par le domaine et n'a pas été modifié en route |
+| DMARC | Ce que le destinataire doit faire si SPF et DKIM échouent, et à qui envoyer les rapports |
+
+#### SPF
+
+Un **seul** enregistrement TXT à la racine du domaine :
+
+| Type | Nom | Valeur |
+|---|---|---|
+| TXT | `@` | `v=spf1 include:spf.protection.outlook.com -all` |
+
+- Ajoutez chaque autre service qui envoie avec votre domaine (outil d'e-mailing, CRM, copieurs, site web…) avant le `-all`, par exemple `v=spf1 include:spf.protection.outlook.com include:servers.mcsv.net -all`.
+- `-all` rejette tout expéditeur non listé. Utilisez `~all` (échec léger) le temps de recenser tous les services d'envoi, puis passez à `-all`.
+- Limite de **10 recherches DNS** (`include`, `a`, `mx`…) : au-delà, SPF échoue pour tout le monde.
+
+#### DKIM
+
+Portail : Stratégies de menace → **Paramètres d'authentification de l'e-mail** → onglet **DKIM** → sélectionner le domaine.
+
+```powershell
+# Créer la configuration DKIM (désactivée tant que le DNS n'est pas prêt)
+New-DkimSigningConfig -DomainName contoso.com -Enabled $false
+
+# Récupérer les deux CNAME à créer dans le DNS
+Get-DkimSigningConfig -Identity contoso.com | Format-List Selector1CNAME, Selector2CNAME
+```
+
+Créez les deux enregistrements chez votre hébergeur DNS :
+
+| Type | Nom | Valeur |
+|---|---|---|
+| CNAME | `selector1._domainkey` | Valeur de `Selector1CNAME` |
+| CNAME | `selector2._domainkey` | Valeur de `Selector2CNAME` |
+
+Une fois les CNAME propagés :
+
+```powershell
+Set-DkimSigningConfig -Identity contoso.com -Enabled $true
+```
+
+> ℹ️ Microsoft fait tourner les clés entre les deux sélecteurs, d'où les deux CNAME. Les clés sont en 2048 bits par défaut ; une ancienne configuration en 1024 bits passe en 2048 avec `Rotate-DkimSigningConfig -Identity contoso.com -KeySize 2048`.
+
+#### DMARC
+
+Enregistrement TXT sur le sous-domaine `_dmarc` :
+
+| Type | Nom | Valeur |
+|---|---|---|
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@contoso.com; fo=1` |
+
+Montez la politique **progressivement**, en lisant les rapports reçus sur l'adresse `rua` à chaque étape :
+
+| Étape | Politique | Durée conseillée |
+|---|---|---|
+| 1 | `p=none` : on observe seulement | 2 à 4 semaines |
+| 2 | `p=quarantine; pct=25` puis `pct=100` : les messages en échec vont en courrier indésirable | 2 à 4 semaines |
+| 3 | `p=reject` : les messages en échec sont refusés | Objectif final |
+
+> ℹ️ Les rapports `rua` sont des fichiers XML difficiles à lire tels quels. Un service d'analyse DMARC (gratuit ou payant) les rend exploitables.
+
+#### Domaines qui n'envoient pas d'e-mails
+
+Pour un domaine « parking » ou un domaine secondaire qui n'envoie rien, bloquez toute usurpation :
+
+| Type | Nom | Valeur |
+|---|---|---|
+| TXT | `@` | `v=spf1 -all` |
+| TXT | `_dmarc` | `v=DMARC1; p=reject;` |
+
+Pensez aussi au domaine `contoso.onmicrosoft.com` : son enregistrement DMARC se configure dans le centre d'administration Microsoft 365 → **Paramètres** → **Domaines** → domaine `onmicrosoft.com` → **Enregistrements DNS**.
+
+#### Vérification
+
+```powershell
+Resolve-DnsName contoso.com -Type TXT | Where-Object Strings -like "v=spf1*"
+Resolve-DnsName selector1._domainkey.contoso.com -Type CNAME
+Resolve-DnsName _dmarc.contoso.com -Type TXT
+
+# DKIM doit être Enabled = True et Status = Valid
+Get-DkimSigningConfig | Select-Object Domain, Enabled, Status
+```
+
+Pour contrôler un message reçu, envoyez un e-mail vers une boîte externe (Gmail par exemple) et vérifiez dans l'en-tête : `spf=pass`, `dkim=pass` et `dmarc=pass`.
+
+Sources :
+- https://learn.microsoft.com/fr-fr/defender-office-365/email-authentication-spf-configure
+- https://learn.microsoft.com/fr-fr/defender-office-365/email-authentication-dkim-configure
+- https://learn.microsoft.com/fr-fr/defender-office-365/email-authentication-dmarc-configure
+
+### Stratégie de quarantaine
+
+À configurer **avant** les stratégies de filtrage : chaque verdict (spam, hameçonnage, malware…) pointe vers une stratégie de quarantaine qui décide de ce que l'utilisateur peut faire avec ses messages bloqués.
+
+**Stratégies intégrées :**
+
+| Stratégie | Ce que l'utilisateur peut faire | Notification |
+|---|---|---|
+| `AdminOnlyAccessPolicy` | Rien, seul l'administrateur voit et libère | Non |
+| `DefaultFullAccessPolicy` | Voir, libérer, supprimer | Non |
+| `DefaultFullAccessWithNotificationPolicy` | Voir, libérer, supprimer | Oui |
+| `NotificationEnabledPolicy` | Voir, libérer, supprimer | Oui |
+
+**Stratégie conseillée :** l'utilisateur voit ses messages et **demande** leur libération, qu'un administrateur valide. Il ne libère rien lui-même.
+
+Portail : Stratégies de menace → **Stratégies de quarantaine** → **Ajouter une stratégie personnalisée**.
+
+```powershell
+$permissions = New-QuarantinePermissions `
+    -PermissionToPreview $true `
+    -PermissionToRequestRelease $true `
+    -PermissionToDelete $true `
+    -PermissionToBlockSender $true
+
+New-QuarantinePolicy -Name "Quarantaine - Demande de libération" `
+    -EndUserQuarantinePermissions $permissions `
+    -ESNEnabled $true
+```
+
+`-ESNEnabled` active les **notifications de quarantaine** : l'utilisateur reçoit un e-mail récapitulant ses messages bloqués, avec un bouton pour demander la libération.
+
+**Paramètres globaux** (Stratégies de quarantaine → **Paramètres globaux**) :
+
+- Fréquence des notifications : `Toutes les 4 heures` ou `Tous les jours`.
+- Nom d'affichage et langue des notifications, logo de l'organisation.
+
+**Qui valide les demandes :** Stratégies de menace → **Stratégies d'alerte** → alerte *« L'utilisateur a demandé à libérer un message mis en quarantaine »* → ajouter les destinataires (service informatique).
+
+**Utilisation dans la suite :**
+
+| Verdict | Stratégie de quarantaine |
+|---|---|
+| Spam, spam à haut niveau de confiance, hameçonnage, usurpation d'identité | `Quarantaine - Demande de libération` |
+| Hameçonnage à haut niveau de confiance, programme malveillant, pièce jointe malveillante | `AdminOnlyAccessPolicy` |
+
+Source : https://learn.microsoft.com/fr-fr/defender-office-365/quarantine-policies
+
+### Anti-hameçonnage
+
+Portail : Stratégies de menace → **Anti-hameçonnage** → **Office365 AntiPhish Default**. Modifier la stratégie par défaut la fait s'appliquer à tous les destinataires, sans règle à créer.
+
+**Réglages :**
+
+| Section | Paramètre | Valeur |
+|---|---|---|
+| Seuil | Seuil d'e-mail d'hameçonnage | `3 - Plus agressif` (`4` pour un niveau strict) |
+| Emprunt d'identité | Utilisateurs à protéger (**VIP**) | Direction, finance, RH, comptes qui valident des paiements (350 max.) |
+| Emprunt d'identité | Domaines à protéger | Inclure **les domaines que je possède** + les domaines des partenaires clés (banque, fournisseurs, clients) |
+| Emprunt d'identité | Veille de la boîte aux lettres et protection contre l'emprunt d'identité | Activées |
+| Usurpation | Veille contre l'usurpation (spoof intelligence) | Activée |
+| Usurpation | Respecter la stratégie DMARC | Activé : `p=quarantine` → Quarantaine, `p=reject` → Rejet |
+| Actions | Utilisateur ou domaine emprunté | Mettre en quarantaine |
+| Actions | Veille de la boîte aux lettres | Déplacer vers le courrier indésirable |
+| Actions | Usurpation détectée | Déplacer vers le courrier indésirable |
+| Conseils de sécurité | Premier contact, utilisateur emprunté, domaine emprunté, caractères inhabituels, expéditeur non authentifié (`?`), balise « via » | Tous activés |
+
+> ℹ️ **Comptes VIP :** listez aussi les adresses génériques sensibles (`compta@`, `paie@`, `direction@`). Ce sont les cibles préférées des fraudes au président et au faux RIB.
+
+```powershell
+Set-AntiPhishPolicy -Identity "Office365 AntiPhish Default" `
+    -PhishThresholdLevel 3 `
+    -EnableTargetedUserProtection $true `
+    -TargetedUsersToProtect @(
+        "Jean Dupont;jean.dupont@contoso.com",
+        "Comptabilité;compta@contoso.com"
+    ) `
+    -TargetedUserProtectionAction Quarantine `
+    -TargetedUserQuarantineTag "Quarantaine - Demande de libération" `
+    -EnableOrganizationDomainsProtection $true `
+    -EnableTargetedDomainsProtection $true `
+    -TargetedDomainsToProtect @("partenaire.com", "banque.fr") `
+    -TargetedDomainProtectionAction Quarantine `
+    -TargetedDomainQuarantineTag "Quarantaine - Demande de libération" `
+    -EnableMailboxIntelligence $true `
+    -EnableMailboxIntelligenceProtection $true `
+    -MailboxIntelligenceProtectionAction MoveToJmf `
+    -EnableSpoofIntelligence $true `
+    -AuthenticationFailAction MoveToJmf `
+    -HonorDmarcPolicy $true `
+    -DmarcQuarantineAction Quarantine `
+    -DmarcRejectAction Reject `
+    -EnableFirstContactSafetyTips $true `
+    -EnableSimilarUsersSafetyTips $true `
+    -EnableSimilarDomainsSafetyTips $true `
+    -EnableUnusualCharactersSafetyTips $true `
+    -EnableUnauthenticatedSender $true `
+    -EnableViaTag $true
+```
+
+> ⚠️ `-TargetedUsersToProtect` et `-TargetedDomainsToProtect` **remplacent** la liste existante. Pour ajouter une entrée, reprenez la liste actuelle (`Get-AntiPhishPolicy`) et ajoutez-y la nouvelle.
+
+**Faux positifs :** si un partenaire légitime est bloqué pour emprunt d'identité, ajoutez-le dans **Expéditeurs et domaines approuvés** de la stratégie plutôt que de désactiver la protection.
+
+Source : https://learn.microsoft.com/fr-fr/defender-office-365/anti-phishing-policies-mdo-configure
+
+### Anti-courrier indésirable
+
+#### Sortant : bloquer le transfert automatique vers l'extérieur
+
+**Pourquoi :** un attaquant qui compromet une boîte crée souvent une règle qui transfère tout le courrier vers une adresse externe. Il continue de lire les e-mails même après le changement du mot de passe. C'est aussi une fuite de données classique.
+
+Portail : Stratégies de menace → **Courrier indésirable** → **Stratégie de filtrage du courrier indésirable sortant (par défaut)**.
+
+| Paramètre | Valeur |
+|---|---|
+| Règles de transfert automatique | `Désactivé - le transfert est désactivé` |
+| Limite de destinataires externes par heure | `500` |
+| Limite de destinataires internes par heure | `1000` |
+| Limite quotidienne | `1000` |
+| Action en cas de dépassement | `Empêcher l'utilisateur d'envoyer des messages` |
+| Notifier des personnes en cas de blocage | Activé, adresse du service informatique |
+
+```powershell
+Set-HostedOutboundSpamFilterPolicy -Identity Default `
+    -AutoForwardingMode Off `
+    -RecipientLimitExternalPerHour 500 `
+    -RecipientLimitInternalPerHour 1000 `
+    -RecipientLimitPerDay 1000 `
+    -ActionWhenThresholdReached BlockUser `
+    -NotifyOutboundSpam $true `
+    -NotifyOutboundSpamRecipients "it@contoso.com"
+```
+
+**Exception :** si une boîte doit vraiment transférer vers l'extérieur, créez une stratégie sortante dédiée avec `-AutoForwardingMode On`, appliquée **uniquement** à cette boîte, plutôt que de rouvrir le transfert pour tout le monde.
+
+```powershell
+New-HostedOutboundSpamFilterPolicy -Name "Transfert autorisé" -AutoForwardingMode On
+New-HostedOutboundSpamFilterRule -Name "Transfert autorisé" `
+    -HostedOutboundSpamFilterPolicy "Transfert autorisé" `
+    -From "boite.autorisee@contoso.com"
+```
+
+> ℹ️ Les utilisateurs bloqués pour dépassement de limite apparaissent dans **Utilisateurs restreints** (portail Defender → E-mail et collaboration → Révision). Il faut les débloquer à la main après avoir vérifié que le compte n'est pas compromis.
+
+#### Entrant : quarantaine ou courrier indésirable ?
+
+C'est l'arbitrage principal de la stratégie entrante :
+
+| | Courrier indésirable | Quarantaine |
+|---|---|---|
+| L'utilisateur voit le message | Oui, dans son dossier Courrier indésirable | Non, il reçoit une notification |
+| Risque de clic sur un lien piégé | Plus élevé (les liens sont désactivés, mais le message est là) | Faible |
+| Charge pour le support | Faible : l'utilisateur se débrouille | Plus forte : demandes de libération à valider |
+| Adapté pour | Spam « classique », faux positifs fréquents | Tout ce qui est dangereux |
+
+**Choix conseillé :** le doute va au courrier indésirable, le danger va en quarantaine.
+
+| Verdict | Action | Stratégie de quarantaine |
+|---|---|---|
+| Courrier indésirable | Déplacer vers le courrier indésirable | – |
+| Courrier indésirable à haut niveau de confiance | Mettre en quarantaine | `Quarantaine - Demande de libération` |
+| Hameçonnage | Mettre en quarantaine | `Quarantaine - Demande de libération` |
+| Hameçonnage à haut niveau de confiance | Mettre en quarantaine | `AdminOnlyAccessPolicy` |
+| Courrier en nombre (bulk) | Déplacer vers le courrier indésirable | – |
+
+Pour un niveau strict, passez aussi **Courrier indésirable** en quarantaine et le seuil bulk à `5`.
+
+**Autres réglages :**
+
+| Paramètre | Valeur |
+|---|---|
+| Seuil de courrier en nombre (BCL) | `6` |
+| Conserver en quarantaine | `30` jours |
+| Conseils de sécurité | Activés |
+| Purge automatique zéro heure (ZAP) pour le spam et l'hameçonnage | Activée |
+
+Portail : Stratégies de menace → **Courrier indésirable** → **Stratégie de filtrage du courrier indésirable entrant (par défaut)**.
+
+```powershell
+Set-HostedContentFilterPolicy -Identity Default `
+    -BulkThreshold 6 `
+    -SpamAction MoveToJmf `
+    -HighConfidenceSpamAction Quarantine `
+    -HighConfidenceSpamQuarantineTag "Quarantaine - Demande de libération" `
+    -PhishSpamAction Quarantine `
+    -PhishQuarantineTag "Quarantaine - Demande de libération" `
+    -HighConfidencePhishAction Quarantine `
+    -HighConfidencePhishQuarantineTag AdminOnlyAccessPolicy `
+    -BulkSpamAction MoveToJmf `
+    -QuarantineRetentionPeriod 30 `
+    -InlineSafetyTipsEnabled $true `
+    -SpamZapEnabled $true `
+    -PhishZapEnabled $true
+```
+
+> ⚠️ N'ajoutez pas vos propres domaines dans **Domaines autorisés** : un attaquant qui usurpe votre domaine passerait alors tous les filtres. Pour un expéditeur légitime bloqué, utilisez la **Liste d'autorisation/de blocage des locataires**.
+
+Sources :
+- https://learn.microsoft.com/fr-fr/defender-office-365/outbound-spam-policies-configure
+- https://learn.microsoft.com/fr-fr/defender-office-365/anti-spam-policies-configure
+
+### Anti-programme malveillant
+
+Portail : Stratégies de menace → **Anti-programme malveillant** → **Default (par défaut)**.
+
+| Paramètre | Valeur |
+|---|---|
+| Activer le filtre des pièces jointes courantes | Activé (liste par défaut : `exe`, `js`, `vbs`, `iso`, `lnk`…) |
+| Quand ces types de fichiers sont trouvés | Rejeter le message avec une notification d'échec (NDR) |
+| Purge automatique zéro heure (ZAP) | Activée |
+| Stratégie de quarantaine | `AdminOnlyAccessPolicy` |
+| Notifier un administrateur des messages non remis (expéditeurs internes) | Activé, adresse du service informatique |
+
+```powershell
+Set-MalwareFilterPolicy -Identity Default `
+    -EnableFileFilter $true `
+    -FileTypeAction Reject `
+    -ZapEnabled $true `
+    -QuarantineTag AdminOnlyAccessPolicy `
+    -EnableInternalSenderAdminNotifications $true `
+    -InternalSenderAdminAddress "it@contoso.com"
+```
+
+> ℹ️ Pour ajouter des extensions à la liste (`one`, `vhd`, `xll`…), passez par le portail : en PowerShell, `-FileTypes` **remplace** toute la liste par défaut.
+
+Source : https://learn.microsoft.com/fr-fr/defender-office-365/anti-malware-policies-configure
+
+### Pièces jointes fiables (Safe Attachments)
+
+**Pourquoi :** l'anti-programme malveillant reconnaît les menaces connues. Les pièces jointes fiables ouvrent en plus chaque pièce jointe dans un bac à sable (*détonation*) pour détecter les menaces inconnues.
+
+**1. Paramètres globaux** (Stratégies de menace → **Pièces jointes fiables** → **Paramètres globaux**) :
+
+- **Activer Defender pour Office 365 pour SharePoint, OneDrive et Microsoft Teams** : Activé. Les fichiers malveillants partagés dans ces services sont bloqués.
+
+**2. Stratégie** (Stratégies de menace → **Pièces jointes fiables** → **Créer**) :
+
+| Paramètre | Valeur |
+|---|---|
+| Utilisateurs, groupes, domaines | Tous les domaines acceptés |
+| Réponse aux programmes malveillants inconnus | `Bloquer` |
+| Stratégie de quarantaine | `AdminOnlyAccessPolicy` |
+| Redirection | Désactivée |
+
+> ℹ️ **Bloquer** retient le message pendant l'analyse (quelques minutes). **Remise dynamique** livre le message tout de suite sans les pièces jointes, puis les rajoute après l'analyse : utile si les délais gênent les utilisateurs.
+
+```powershell
+# Paramètres globaux
+Set-AtpPolicyForO365 -EnableATPForSPOTeamsODB $true
+
+# Stratégie et règle appliquées à tous les domaines du tenant
+New-SafeAttachmentPolicy -Name "Pièces jointes fiables" `
+    -Enable $true `
+    -Action Block `
+    -QuarantineTag AdminOnlyAccessPolicy `
+    -Redirect $false
+
+New-SafeAttachmentRule -Name "Pièces jointes fiables" `
+    -SafeAttachmentPolicy "Pièces jointes fiables" `
+    -RecipientDomainIs $domains `
+    -Priority 0
+```
+
+En complément, empêchez le téléchargement des fichiers détectés comme malveillants dans SharePoint et OneDrive (module SharePoint Online) :
+
+```powershell
+Connect-SPOService -Url https://contoso-admin.sharepoint.com
+Set-SPOTenant -DisallowInfectedFileDownload $true
+```
+
+Source : https://learn.microsoft.com/fr-fr/defender-office-365/safe-attachments-policies-configure
+
+### Liens fiables (Safe Links)
+
+**Pourquoi :** un lien peut être sain à la réception puis piégé quelques heures plus tard. Les liens fiables réécrivent les URL et les vérifient **au moment du clic**, dans les e-mails, Teams et les applications Office.
+
+Portail : Stratégies de menace → **Liens fiables** → **Créer**.
+
+| Paramètre | Valeur |
+|---|---|
+| Utilisateurs, groupes, domaines | Tous les domaines acceptés |
+| E-mail : activé | Oui |
+| Appliquer l'analyse des URL en temps réel | Oui |
+| Attendre la fin de l'analyse avant de remettre le message | Oui |
+| Appliquer aux e-mails envoyés en interne | Oui |
+| Ne pas réécrire les URL | Non (les URL sont réécrites) |
+| Teams : activé | Oui |
+| Applications Office : activé | Oui |
+| Suivre les clics des utilisateurs | Oui |
+| Autoriser les utilisateurs à cliquer jusqu'à l'URL d'origine | **Non** |
+
+```powershell
+New-SafeLinksPolicy -Name "Liens fiables" `
+    -EnableSafeLinksForEmail $true `
+    -ScanUrls $true `
+    -DeliverMessageAfterScan $true `
+    -EnableForInternalSenders $true `
+    -DisableUrlRewrite $false `
+    -EnableSafeLinksForTeams $true `
+    -EnableSafeLinksForOffice $true `
+    -TrackClicks $true `
+    -AllowClickThrough $false
+
+New-SafeLinksRule -Name "Liens fiables" `
+    -SafeLinksPolicy "Liens fiables" `
+    -RecipientDomainIs $domains `
+    -Priority 0
+```
+
+> ℹ️ Pour une URL interne ou d'un partenaire qui ne supporte pas la réécriture, ajoutez-la dans **Ne pas réécrire les URL suivantes** (`-DoNotRewriteUrls`) plutôt que de désactiver la réécriture.
+
+Source : https://learn.microsoft.com/fr-fr/defender-office-365/safe-links-policies-configure
+
+### Vérification de la partie messagerie
+
+**Analyseur de configuration :** Stratégies de menace → **Analyseur de configuration**. Il compare vos stratégies aux niveaux Standard et Strict de Microsoft et liste les écarts.
+
+```powershell
+Get-QuarantinePolicy | Select-Object Name, ESNEnabled
+Get-AntiPhishPolicy | Format-List Name, PhishThresholdLevel, EnableTargetedUserProtection, EnableOrganizationDomainsProtection, HonorDmarcPolicy
+Get-HostedOutboundSpamFilterPolicy | Select-Object Name, AutoForwardingMode, ActionWhenThresholdReached
+Get-HostedContentFilterPolicy | Format-List Name, SpamAction, HighConfidenceSpamAction, PhishSpamAction, HighConfidencePhishAction, BulkThreshold
+Get-MalwareFilterPolicy | Select-Object Name, EnableFileFilter, FileTypeAction, ZapEnabled
+Get-AtpPolicyForO365 | Select-Object EnableATPForSPOTeamsODB
+Get-SafeAttachmentRule | Select-Object Name, State, RecipientDomainIs
+Get-SafeLinksRule | Select-Object Name, State, RecipientDomainIs
+```
+
+**Test de bout en bout :**
+
+- Fichier de test **EICAR** (eicar.org) envoyé depuis une boîte externe : le message doit être rejeté ou mis en quarantaine.
+- Transfert automatique : créez une règle de boîte de réception qui transfère vers une adresse externe. Le message transféré doit être bloqué, avec une notification d'échec (code `5.7.520`).
