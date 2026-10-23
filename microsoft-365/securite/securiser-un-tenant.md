@@ -661,8 +661,6 @@ Source : https://learn.microsoft.com/fr-fr/defender-office-365/safe-links-polici
 
 ### Vérification de la partie messagerie
 
-**Analyseur de configuration :** Stratégies de menace → **Analyseur de configuration**. Il compare vos stratégies aux niveaux Standard et Strict de Microsoft et liste les écarts.
-
 ```powershell
 Get-QuarantinePolicy | Select-Object Name, ESNEnabled
 Get-AntiPhishPolicy | Format-List Name, PhishThresholdLevel, EnableTargetedUserProtection, EnableOrganizationDomainsProtection, HonorDmarcPolicy
@@ -678,3 +676,12 @@ Get-SafeLinksRule | Select-Object Name, State, RecipientDomainIs
 
 - Fichier de test **EICAR** (eicar.org) envoyé depuis une boîte externe : le message doit être rejeté ou mis en quarantaine.
 - Transfert automatique : créez une règle de boîte de réception qui transfère vers une adresse externe. Le message transféré doit être bloqué, avec une notification d'échec (code `5.7.520`).
+
+**Pour finir, passer l'analyseur de configuration :** portail Defender → E-mail et collaboration → Stratégies et règles → Stratégies de menace → **Analyseur de configuration**.
+
+- Il compare chaque stratégie (anti-hameçonnage, anti-spam, anti-malware, pièces jointes fiables, liens fiables) aux niveaux **Standard** et **Strict** recommandés par Microsoft.
+- Il liste chaque paramètre en écart avec la valeur actuelle et la valeur recommandée, et permet d'appliquer la recommandation en un clic.
+- Objectif : aucune recommandation restante au niveau **Standard**. Les écarts restants doivent être des choix assumés (par exemple « Courrier indésirable » en indésirable plutôt qu'en quarantaine).
+- Repassez-le après chaque modification des stratégies, et de temps en temps : Microsoft fait évoluer ses recommandations.
+
+Source : https://learn.microsoft.com/fr-fr/defender-office-365/configuration-analyzer-for-security-policies
