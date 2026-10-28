@@ -31,28 +31,26 @@ Liste des points à traiter un par un pour renforcer un tenant. Cochez chaque po
 
 - [ ] **Auditer les secrets et certificats des applications (2 ans de validité max.)**
   - Pourquoi : un secret d'application est un mot de passe, souvent avec des droits larges.
-  - Script : [audit-secrets-applications.ps1](scripts/audit-secrets-applications.ps1). Il liste toutes les inscriptions d'applications du tenant avec leurs secrets, la **dernière utilisation** de chaque application, et exporte un CSV.
-  - Prérequis : licence **Entra ID P1** pour la dernière utilisation.
-- [ ] **Traiter chaque ligne du CSV selon son statut et sa dernière utilisation**
+  - Script : [audit-secrets-applications.ps1](scripts/audit-secrets-applications.ps1). Il liste toutes les inscriptions d'applications du tenant avec leurs secrets et exporte un CSV. Les applications créées automatiquement par Microsoft (tableau ci-dessous) sont exclues.
+- [ ] **Traiter chaque ligne du CSV selon son statut**
 
-  | Statut | Utilisée (< 90 jours) | Inutilisée (> 90 jours ou `Aucune trace`) |
-  |---|---|---|
-  | `1 - Expiré` | Le secret ne sert plus : le supprimer | Désactiver l'application, puis la supprimer |
-  | `2 - Plus de 2 ans` | Créer un nouveau secret de 2 ans max., le mettre en place, **puis** supprimer l'ancien | Supprimer le secret, désactiver puis supprimer l'application |
-  | `3 - OK` | Rien à faire | Désactiver puis supprimer l'application |
-  | `4 - Aucun secret` | Rien à faire, vérifier qu'elle a un propriétaire | Désactiver puis supprimer l'application |
+  | Statut | Action |
+  |---|---|
+  | `1 - Expiré` | Supprimer le secret. Supprimer l'application si personne ne la réclame |
+  | `2 - Plus de 2 ans` | Créer un nouveau secret de 2 ans max., le mettre en place, **puis** supprimer l'ancien |
+  | `3 - OK` | Rien à faire |
+  | `4 - Aucun secret` | Normal si l'application ne fait que connecter des utilisateurs. Vérifier qu'elle sert encore (journaux de connexion) et qu'elle a un propriétaire |
 
-  - **Désactiver** : Applications d'entreprise → *application* → Propriétés → *Activée pour la connexion des utilisateurs* : `Non`. Attendre 30 à 60 jours que quelqu'un réclame avant de **supprimer** (restaurable pendant 30 jours).
-  - La dernière utilisation couvre toutes les connexions : par un utilisateur, par l'application seule ou en tant qu'API.
+  - Avant de supprimer une application, la **désactiver** : Applications d'entreprise → *application* → Propriétés → *Activée pour la connexion des utilisateurs* : `Non`. Attendre 30 à 60 jours que quelqu'un réclame avant de **supprimer** (restaurable pendant 30 jours).
 
   Renouvellement : Entra ID → Inscriptions d'applications → *application* → Certificats et secrets.
 
-  **⚠️ Applications créées automatiquement par Microsoft : ne pas supprimer**, même en `4 - Aucun secret` ou sans utilisation récente.
+  **⚠️ Applications créées automatiquement par Microsoft : ne pas supprimer ni modifier**, même si leur secret dépasse 2 ans : il est géré par Microsoft. Le script les exclut par leur nom (liste `$applicationsMicrosoft` en haut du script, à compléter au fil des clients).
 
   | Application | Rôle | Si on la supprime |
   |---|---|---|
   | `P2P Server` | Créée par Windows et Entra ID pour l'authentification entre postes joints à Entra ID, notamment le **Bureau à distance avec un compte Entra** | Le Bureau à distance entre postes joints à Entra ID ne fonctionne plus |
-  | `SharePoint Online Client Extensibility Web Application Principal Helper` | Créée par SharePoint pour que les solutions **SharePoint Framework (SPFx)** appellent des API (Graph, API maison) | Les WebParts et extensions SPFx qui appellent une API cessent de fonctionner |
+  | `SharePoint Online Client Extensibility Web Application Principal` et `… Helper` | Créées par SharePoint pour que les solutions **SharePoint Framework (SPFx)** appellent des API (Graph, API maison). Leurs autorisations se contrôlent dans SharePoint → Avancé → **Accès aux API** | Les WebParts et extensions SPFx qui appellent une API cessent de fonctionner |
 
   En cas de doute sur une application au nom de service Microsoft (SharePoint, Teams, Office, Intune…), chercher son nom sur learn.microsoft.com avant d'y toucher.
 
