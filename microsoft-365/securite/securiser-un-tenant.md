@@ -9,9 +9,11 @@ Procédure de renforcement d'un tenant Microsoft 365, classée par domaine. Chaq
    - [Désactiver les achats et les versions d'essai en libre-service](#désactiver-les-achats-et-les-versions-dessai-en-libre-service)
 3. [👤 Identités et inscriptions](#-identités-et-inscriptions)
    - [Désactiver le « viral sign-up »](#désactiver-le--viral-sign-up-)
-4. [💻 Appareils](#-appareils)
+4. [🧩 Applications Entra ID](#-applications-entra-id)
+   - [Contrôler les secrets et certificats des applications](#contrôler-les-secrets-et-certificats-des-applications)
+5. [💻 Appareils](#-appareils)
    - [Configurer Windows LAPS](#configurer-windows-laps) (et désactiver les comptes Administrator et Invité)
-5. [📧 Messagerie et antispam](#-messagerie-et-antispam)
+6. [📧 Messagerie et antispam](#-messagerie-et-antispam)
    - [Authentification des e-mails : SPF, DKIM et DMARC](#authentification-des-e-mails--spf-dkim-et-dmarc)
    - [Stratégie de quarantaine](#stratégie-de-quarantaine)
    - [Anti-hameçonnage](#anti-hameçonnage)
@@ -113,6 +115,109 @@ Get-MgPolicyAuthorizationPolicy | Select AllowEmailVerifiedUsersToJoinOrganizati
 ```
 
 Source : https://learn.microsoft.com/fr-fr/entra/identity/users/directory-self-service-signup
+
+## 🧩 Applications Entra ID
+
+### Contrôler les secrets et certificats des applications
+
+**Pourquoi :** une application inscrite dans Entra ID s'authentifie avec un **secret client** ou un **certificat**. Ce sont des mots de passe d'applications, souvent dotés de permissions larges (lecture des boîtes, des fichiers, de l'annuaire). Un secret valable 10 ans, oublié dans un script ou un dépôt de code, est une porte d'entrée durable pour un attaquant.
+
+**Règle :** aucun secret ni certificat ne doit avoir une durée de validité **supérieure à 2 ans**.
+
+> ℹ️ Le portail limite les nouveaux secrets à 24 mois. En revanche, un certificat importé ou un secret créé en PowerShell ou par l'API Graph peut durer bien plus longtemps : d'où ce contrôle.
+
+**Rôle minimum :** Lecteur global (scope Graph `Application.Read.All`, lecture seule).
+
+#### Lister les secrets et certificats
+
+Le script liste chaque secret et chaque certificat des **inscriptions d'applications**. Pour chacun, il indique sa durée de validité, sa date d'expiration et s'il dépasse 2 ans.
+
+```powershell
+Install-Module Microsoft.Graph -Scope CurrentUser
+Import-Module Microsoft.Graph
+Connect-MgGraph -Scopes "Application.Read.All"
+
+$now = Get-Date
+
+$results = foreach ($app in Get-MgApplication -All -Property Id, AppId, DisplayName, PasswordCredentials, KeyCredentials) {
+
+    $creds = @(
+        foreach ($s in $app.PasswordCredentials) {
+            [pscustomobject]@{ Type = "Secret"; Nom = $s.DisplayName; Debut = $s.StartDateTime; Fin = $s.EndDateTime }
+        }
+        foreach ($k in $app.KeyCredentials) {
+            [pscustomobject]@{ Type = "Certificat"; Nom = $k.DisplayName; Debut = $k.StartDateTime; Fin = $k.EndDateTime }
+        }
+    )
+
+    foreach ($c in $creds) {
+        [pscustomobject]@{
+            Application      = $app.DisplayName
+            AppId            = $app.AppId
+            Type             = $c.Type
+            Nom              = $c.Nom
+            Creation         = $c.Debut.ToString("yyyy-MM-dd")
+            Expiration       = $c.Fin.ToString("yyyy-MM-dd")
+            DureeJours       = ($c.Fin - $c.Debut).Days
+            JoursRestants    = ($c.Fin - $now).Days
+            PlusDe2Ans       = $c.Fin -gt $c.Debut.AddYears(2)
+            Statut           = if ($c.Fin -lt $now) { "Expiré" } elseif ($c.Fin -lt $now.AddDays(30)) { "Expire sous 30 j" } else { "OK" }
+        }
+    }
+}
+
+# Vue complète, triée par date d'expiration
+$results | Sort-Object Expiration | Format-Table -AutoSize
+
+# Uniquement ceux qui dépassent 2 ans
+$results | Where-Object PlusDe2Ans | Format-Table Application, Type, Nom, Creation, Expiration, DureeJours -AutoSize
+
+# Export pour Excel
+$results | Export-Csv -Path ".\applications-credentials.csv" -NoTypeInformation -Encoding UTF8 -Delimiter ";"
+
+Disconnect-MgGraph
+```
+
+#### Ce que fait le script
+
+1. **Connexion** à Microsoft Graph en lecture seule. `$now` garde la date du jour pour les calculs.
+2. **Récupération** de toutes les inscriptions d'applications (`-All`, sinon Graph s'arrête à la première page). Seuls les champs utiles sont demandés : nom, AppId, secrets (`PasswordCredentials`) et certificats (`KeyCredentials`).
+3. **Mise en commun** des secrets et des certificats de chaque application dans une seule liste au même format. Une application sans secret ni certificat ne produit aucune ligne.
+4. **Une ligne par secret ou certificat**, avec les colonnes suivantes :
+
+| Colonne | Calcul | Signification |
+|---|---|---|
+| `Application`, `AppId` | Repris de l'application | À quelle application appartient la ligne |
+| `Type`, `Nom` | Secret ou Certificat, description saisie à la création | Quel identifiant est concerné |
+| `Creation`, `Expiration` | Dates au format `2026-10-28` | Lisibles et triables |
+| `DureeJours` | Fin − Début | Durée de validité totale |
+| `JoursRestants` | Fin − aujourd'hui | Négatif si déjà expiré |
+| `PlusDe2Ans` | Fin > Début + 2 ans | `True` si la règle des 2 ans n'est pas respectée |
+| `Statut` | Comparaison avec aujourd'hui | `Expiré`, `Expire sous 30 j` ou `OK` |
+
+5. **Affichage** de deux tableaux, la vue complète puis les seuls dépassements, et **export CSV** dans le dossier courant (séparateur `;` et UTF-8, pour l'ouvrir directement dans un Excel français).
+
+> ℹ️ `PlusDe2Ans` ajoute 2 ans à la date de création plutôt que de compter 730 jours. Un secret de 24 mois qui contient un 29 février fait 731 jours : avec un compte en jours, il serait signalé à tort.
+
+Le script ne modifie, ne supprime et ne renouvelle rien.
+
+#### Que faire des résultats
+
+| Résultat | Action |
+|---|---|
+| `PlusDe2Ans = True` | Créer un nouveau secret ou certificat de 2 ans maximum, le mettre à jour dans l'application ou le script qui l'utilise, puis supprimer l'ancien |
+| `Expiré` | Vérifier si l'application sert encore. Sinon, supprimer le secret, voire l'application |
+| `Expire sous 30 j` | Planifier le renouvellement avec le responsable de l'application avant la coupure |
+
+Le renouvellement se fait dans Entra ID → **Inscriptions d'applications** → *application* → **Certificats et secrets**.
+
+> ℹ️ **Limites du contrôle :** le script ne couvre que les **inscriptions d'applications**. Les **applications d'entreprise** (applications tierces ajoutées au tenant) peuvent aussi porter des certificats, par exemple les certificats de signature SAML pour le SSO. Ceux-là se consultent avec `Get-MgServicePrincipal`.
+
+> ℹ️ **Imposer la règle :** pour empêcher la création de secrets de plus de 2 ans au lieu de seulement la contrôler, Entra ID propose les *stratégies de gestion des applications* (`Update-MgPolicyDefaultAppManagementPolicy`). Elles nécessitent une licence Microsoft Entra Workload ID.
+
+Sources :
+- https://learn.microsoft.com/fr-fr/graph/api/resources/application
+- https://learn.microsoft.com/fr-fr/entra/identity/enterprise-apps/tutorial-enforce-secret-standards
 
 ## 💻 Appareils
 
