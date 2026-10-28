@@ -267,11 +267,6 @@ $liste | Format-Table Statut, Application, Type, Nom, Creation, Expiration, Dure
 
 $liste | Export-Csv -Path ".\audit-secrets-applications.csv" -NoTypeInformation -Encoding UTF8 -Delimiter ";"
 Write-Host "Export : $((Get-Location).Path)\audit-secrets-applications.csv"
-
-
-# --- 6. Déconnexion ----------------------------------------------------------
-
-Disconnect-MgGraph
 ```
 
 **Colonnes du résultat :** `Statut`, `Application`, `AppId`, `Type` (Secret ou Certificat), `Nom` (description saisie à la création), `Creation`, `Expiration`, `DureeEnJours` et `JoursRestants` (négatif si expiré).
