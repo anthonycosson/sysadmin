@@ -130,88 +130,166 @@ Source : https://learn.microsoft.com/fr-fr/entra/identity/users/directory-self-s
 
 #### Lister les secrets et certificats
 
-Le script liste chaque secret et chaque certificat des **inscriptions d'applications**. Pour chacun, il indique sa durée de validité, sa date d'expiration et s'il dépasse 2 ans.
+Le script liste **toutes les applications créées dans le tenant** (Entra ID → Inscriptions d'applications), avec chacun de leurs secrets et certificats. Les applications Microsoft et les applications tierces ne sont pas listées.
+
+Chaque secret ou certificat reçoit un statut :
+
+| Statut | Signification |
+|---|---|
+| `1 - Expiré` | La date d'expiration est dépassée |
+| `2 - Plus de 2 ans` | Valide, mais créé avec une durée de plus de 2 ans |
+| `3 - OK` | Valide, durée de 2 ans maximum |
+| `4 - Aucun secret` | L'application n'a ni secret ni certificat (une ligne pour qu'elle apparaisse quand même) |
+
+Le numéro devant le statut sert uniquement à trier la liste dans cet ordre. Un secret expiré est classé `Expiré`, même si sa durée dépassait 2 ans.
 
 ```powershell
-Install-Module Microsoft.Graph -Scope CurrentUser
-Import-Module Microsoft.Graph
+# =============================================================================
+#  Audit des secrets et certificats des applications inscrites dans Entra ID
+# =============================================================================
+#
+#  Ce script liste TOUTES les applications créées dans notre tenant
+#  (Entra ID > Inscriptions d'applications) avec leurs secrets et certificats.
+#  Les applications Microsoft et les applications tierces ne sont pas listées.
+#
+#  Chaque secret ou certificat reçoit un statut :
+#
+#    1 - Expiré         La date d'expiration est dépassée
+#    2 - Plus de 2 ans  Valide, mais créé avec une durée de plus de 2 ans
+#    3 - OK             Valide, durée de 2 ans maximum
+#    4 - Aucun secret   L'application n'a ni secret ni certificat
+#
+#  Le numéro devant le statut sert uniquement à trier la liste dans cet ordre.
+#
+#  Le script ne fait que LIRE : il ne modifie et ne supprime rien.
+#  Résultat : un tableau à l'écran et un fichier CSV à ouvrir dans Excel.
+# =============================================================================
+
+
+# --- 1. Connexion à Microsoft Graph (lecture seule des applications) ---------
+
 Connect-MgGraph -Scopes "Application.Read.All"
 
-$now = Get-Date
 
-$results = foreach ($app in Get-MgApplication -All -Property Id, AppId, DisplayName, PasswordCredentials, KeyCredentials) {
+# --- 2. Récupération des applications ----------------------------------------
+# -All        : récupère toutes les applications (sinon seulement la 1re page)
+# -Property   : ne demande que les informations utiles
 
-    $creds = @(
-        foreach ($s in $app.PasswordCredentials) {
-            [pscustomobject]@{ Type = "Secret"; Nom = $s.DisplayName; Debut = $s.StartDateTime; Fin = $s.EndDateTime }
+$applications = Get-MgApplication -All -Property DisplayName, AppId, PasswordCredentials, KeyCredentials
+
+$aujourdhui = Get-Date
+$liste = @()
+
+
+# --- 3. Analyse de chaque application ----------------------------------------
+
+foreach ($app in $applications) {
+
+    # On rassemble les secrets et les certificats dans une seule liste
+    $identifiants = @()
+
+    foreach ($secret in $app.PasswordCredentials) {
+        $identifiants += [pscustomobject]@{
+            Type  = "Secret"
+            Nom   = $secret.DisplayName
+            Debut = $secret.StartDateTime
+            Fin   = $secret.EndDateTime
         }
-        foreach ($k in $app.KeyCredentials) {
-            [pscustomobject]@{ Type = "Certificat"; Nom = $k.DisplayName; Debut = $k.StartDateTime; Fin = $k.EndDateTime }
-        }
-    )
+    }
 
-    foreach ($c in $creds) {
-        [pscustomobject]@{
-            Application      = $app.DisplayName
-            AppId            = $app.AppId
-            Type             = $c.Type
-            Nom              = $c.Nom
-            Creation         = $c.Debut.ToString("yyyy-MM-dd")
-            Expiration       = $c.Fin.ToString("yyyy-MM-dd")
-            DureeJours       = ($c.Fin - $c.Debut).Days
-            JoursRestants    = ($c.Fin - $now).Days
-            PlusDe2Ans       = $c.Fin -gt $c.Debut.AddYears(2)
-            Statut           = if ($c.Fin -lt $now) { "Expiré" } elseif ($c.Fin -lt $now.AddDays(30)) { "Expire sous 30 j" } else { "OK" }
+    foreach ($certificat in $app.KeyCredentials) {
+        $identifiants += [pscustomobject]@{
+            Type  = "Certificat"
+            Nom   = $certificat.DisplayName
+            Debut = $certificat.StartDateTime
+            Fin   = $certificat.EndDateTime
+        }
+    }
+
+    # Application sans secret ni certificat : une seule ligne, pour qu'elle
+    # apparaisse quand même dans la liste
+    if ($identifiants.Count -eq 0) {
+        $liste += [pscustomobject]@{
+            Statut        = "4 - Aucun secret"
+            Application   = $app.DisplayName
+            AppId         = $app.AppId
+            Type          = ""
+            Nom           = ""
+            Creation      = ""
+            Expiration    = ""
+            DureeEnJours  = ""
+            JoursRestants = ""
+        }
+        continue
+    }
+
+    # Une ligne par secret ou certificat
+    foreach ($id in $identifiants) {
+
+        # Statut : on teste d'abord l'expiration, puis la durée
+        # (Debut + 2 ans plutôt que 730 jours, pour ne pas compter les années bissextiles)
+        if ($id.Fin -lt $aujourdhui) {
+            $statut = "1 - Expiré"
+        }
+        elseif ($id.Fin -gt $id.Debut.AddYears(2)) {
+            $statut = "2 - Plus de 2 ans"
+        }
+        else {
+            $statut = "3 - OK"
+        }
+
+        $liste += [pscustomobject]@{
+            Statut        = $statut
+            Application   = $app.DisplayName
+            AppId         = $app.AppId
+            Type          = $id.Type
+            Nom           = $id.Nom
+            Creation      = $id.Debut.ToString("dd/MM/yyyy")
+            Expiration    = $id.Fin.ToString("dd/MM/yyyy")
+            DureeEnJours  = ($id.Fin - $id.Debut).Days
+            JoursRestants = ($id.Fin - $aujourdhui).Days    # négatif si expiré
         }
     }
 }
 
-# Vue complète, triée par date d'expiration
-$results | Sort-Object Expiration | Format-Table -AutoSize
 
-# Uniquement ceux qui dépassent 2 ans
-$results | Where-Object PlusDe2Ans | Format-Table Application, Type, Nom, Creation, Expiration, DureeJours -AutoSize
+# --- 4. Affichage ------------------------------------------------------------
 
-# Export pour Excel
-$results | Export-Csv -Path ".\applications-credentials.csv" -NoTypeInformation -Encoding UTF8 -Delimiter ";"
+# Nombre de secrets par statut
+$liste | Group-Object Statut | Sort-Object Name | Select-Object Name, Count | Format-Table -AutoSize
+
+# Liste détaillée, triée par statut puis par application
+$liste = $liste | Sort-Object Statut, Application
+$liste | Format-Table Statut, Application, Type, Nom, Creation, Expiration, DureeEnJours -AutoSize
+
+
+# --- 5. Export CSV pour Excel (séparateur ";" et UTF-8 pour les accents) -----
+
+$liste | Export-Csv -Path ".\audit-secrets-applications.csv" -NoTypeInformation -Encoding UTF8 -Delimiter ";"
+Write-Host "Export : $((Get-Location).Path)\audit-secrets-applications.csv"
+
+
+# --- 6. Déconnexion ----------------------------------------------------------
 
 Disconnect-MgGraph
 ```
 
-#### Ce que fait le script
+**Colonnes du résultat :** `Statut`, `Application`, `AppId`, `Type` (Secret ou Certificat), `Nom` (description saisie à la création), `Creation`, `Expiration`, `DureeEnJours` et `JoursRestants` (négatif si expiré).
 
-1. **Connexion** à Microsoft Graph en lecture seule. `$now` garde la date du jour pour les calculs.
-2. **Récupération** de toutes les inscriptions d'applications (`-All`, sinon Graph s'arrête à la première page). Seuls les champs utiles sont demandés : nom, AppId, secrets (`PasswordCredentials`) et certificats (`KeyCredentials`).
-3. **Mise en commun** des secrets et des certificats de chaque application dans une seule liste au même format. Une application sans secret ni certificat ne produit aucune ligne.
-4. **Une ligne par secret ou certificat**, avec les colonnes suivantes :
-
-| Colonne | Calcul | Signification |
-|---|---|---|
-| `Application`, `AppId` | Repris de l'application | À quelle application appartient la ligne |
-| `Type`, `Nom` | Secret ou Certificat, description saisie à la création | Quel identifiant est concerné |
-| `Creation`, `Expiration` | Dates au format `2026-10-28` | Lisibles et triables |
-| `DureeJours` | Fin − Début | Durée de validité totale |
-| `JoursRestants` | Fin − aujourd'hui | Négatif si déjà expiré |
-| `PlusDe2Ans` | Fin > Début + 2 ans | `True` si la règle des 2 ans n'est pas respectée |
-| `Statut` | Comparaison avec aujourd'hui | `Expiré`, `Expire sous 30 j` ou `OK` |
-
-5. **Affichage** de deux tableaux, la vue complète puis les seuls dépassements, et **export CSV** dans le dossier courant (séparateur `;` et UTF-8, pour l'ouvrir directement dans un Excel français).
-
-> ℹ️ `PlusDe2Ans` ajoute 2 ans à la date de création plutôt que de compter 730 jours. Un secret de 24 mois qui contient un 29 février fait 731 jours : avec un compte en jours, il serait signalé à tort.
-
-Le script ne modifie, ne supprime et ne renouvelle rien.
+> ℹ️ Le contrôle des 2 ans compare l'expiration à la date de création + 2 ans, plutôt qu'à 730 jours. Un secret de 24 mois qui contient un 29 février fait 731 jours : avec un compte en jours, il serait signalé à tort.
 
 #### Que faire des résultats
 
-| Résultat | Action |
+| Statut | Action |
 |---|---|
-| `PlusDe2Ans = True` | Créer un nouveau secret ou certificat de 2 ans maximum, le mettre à jour dans l'application ou le script qui l'utilise, puis supprimer l'ancien |
-| `Expiré` | Vérifier si l'application sert encore. Sinon, supprimer le secret, voire l'application |
-| `Expire sous 30 j` | Planifier le renouvellement avec le responsable de l'application avant la coupure |
+| `1 - Expiré` | Le secret ne sert plus : le supprimer. Si l'application n'a plus aucun secret valide et que personne ne la réclame, la supprimer aussi |
+| `2 - Plus de 2 ans` | Créer un nouveau secret ou certificat de 2 ans maximum, le mettre à jour dans l'application ou le script qui l'utilise, **puis** supprimer l'ancien |
+| `3 - OK` | Rien à faire. Surveiller `JoursRestants` pour planifier le renouvellement |
+| `4 - Aucun secret` | Normal pour une application qui ne fait que connecter des utilisateurs. Si elle n'a ni utilisation ni propriétaire connus, candidate à la suppression |
 
 Le renouvellement se fait dans Entra ID → **Inscriptions d'applications** → *application* → **Certificats et secrets**.
 
-> ℹ️ **Limites du contrôle :** le script ne couvre que les **inscriptions d'applications**. Les **applications d'entreprise** (applications tierces ajoutées au tenant) peuvent aussi porter des certificats, par exemple les certificats de signature SAML pour le SSO. Ceux-là se consultent avec `Get-MgServicePrincipal`.
+> ℹ️ **Limites du contrôle :** le script ne couvre volontairement que les **inscriptions d'applications** (nos applications). Les **applications d'entreprise** (applications tierces ajoutées au tenant) peuvent aussi porter des certificats, par exemple les certificats de signature SAML pour le SSO. Ceux-là se consultent avec `Get-MgServicePrincipal`.
 
 > ℹ️ **Imposer la règle :** pour empêcher la création de secrets de plus de 2 ans au lieu de seulement la contrôler, Entra ID propose les *stratégies de gestion des applications* (`Update-MgPolicyDefaultAppManagementPolicy`). Elles nécessitent une licence Microsoft Entra Workload ID.
 
