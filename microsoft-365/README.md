@@ -11,7 +11,8 @@
 
 ## 🛡️ Sécurité
 
-- [Sécuriser un tenant Microsoft 365](securite/securiser-un-tenant.md) : procédure de renforcement du tenant (achats en libre-service, viral sign-up, secrets des applications, Windows LAPS, SPF/DKIM/DMARC, antispam et Defender for Office 365…)
+- [Sécuriser un tenant Microsoft 365](securite/securiser-un-tenant.md) : checklist de renforcement du tenant (achats, viral sign-up, secrets des applications, Windows LAPS, SPF/DKIM/DMARC, protection de la messagerie)
+- [Scripts](securite/scripts/) : désactivation des achats en libre-service et du viral sign-up, audit des secrets des applications, configuration de la protection de la messagerie
 
 ## 📁 SharePoint
 
