@@ -47,6 +47,15 @@ Liste des points à traiter un par un pour renforcer un tenant. Cochez chaque po
 
   Renouvellement : Entra ID → Inscriptions d'applications → *application* → Certificats et secrets.
 
+  **⚠️ Applications créées automatiquement par Microsoft : ne pas supprimer**, même en `4 - Aucun secret` ou sans utilisation récente.
+
+  | Application | Rôle | Si on la supprime |
+  |---|---|---|
+  | `P2P Server` | Créée par Windows et Entra ID pour l'authentification entre postes joints à Entra ID, notamment le **Bureau à distance avec un compte Entra** | Le Bureau à distance entre postes joints à Entra ID ne fonctionne plus |
+  | `SharePoint Online Client Extensibility Web Application Principal Helper` | Créée par SharePoint pour que les solutions **SharePoint Framework (SPFx)** appellent des API (Graph, API maison) | Les WebParts et extensions SPFx qui appellent une API cessent de fonctionner |
+
+  En cas de doute sur une application au nom de service Microsoft (SharePoint, Teams, Office, Intune…), chercher son nom sur learn.microsoft.com avant d'y toucher.
+
 ## 💻 4. Appareils : Windows LAPS
 
 Un mot de passe administrateur local unique par poste, qui tourne automatiquement et est sauvegardé dans Entra ID.
