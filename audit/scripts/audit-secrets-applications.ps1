@@ -3,7 +3,8 @@
 # =============================================================================
 #
 #  Ce script liste TOUTES les applications créées dans notre tenant
-#  (Entra ID > Inscriptions d'applications) avec leurs secrets et certificats.
+#  (Entra ID > Inscriptions d'applications) avec leurs secrets et certificats,
+#  et la dernière fois que chaque application a été utilisée.
 #  Les applications Microsoft et les applications tierces ne sont pas listées.
 #
 #  Chaque secret ou certificat reçoit un statut :
@@ -15,14 +16,20 @@
 #
 #  Le numéro devant le statut sert uniquement à trier la liste dans cet ordre.
 #
+#  Dernière utilisation : toute connexion confondue (par un utilisateur, par
+#  l'application seule avec son secret, ou en tant qu'API appelée par une
+#  autre application). Nécessite une licence Entra ID P1.
+#
 #  Le script ne fait que LIRE : il ne modifie et ne supprime rien.
 #  Résultat : un tableau à l'écran et un fichier CSV à ouvrir dans Excel.
 # =============================================================================
 
 
-# --- 1. Connexion à Microsoft Graph (lecture seule des applications) ---------
+# --- 1. Connexion à Microsoft Graph (lecture seule) --------------------------
+# Application.Read.All : lire les applications
+# AuditLog.Read.All    : lire la dernière utilisation
 
-Connect-MgGraph -Scopes "Application.Read.All"
+Connect-MgGraph -Scopes "Application.Read.All", "AuditLog.Read.All"
 
 
 # --- 2. Récupération des applications ----------------------------------------
@@ -35,9 +42,36 @@ $aujourdhui = Get-Date
 $liste = @()
 
 
-# --- 3. Analyse de chaque application ----------------------------------------
+# --- 3. Dernière utilisation de chaque application ---------------------------
+# L'API renvoie les résultats par pages : on boucle tant qu'il y a une page
+# suivante. On range les dates dans $derniereUtilisation, rangées par AppId.
+
+$derniereUtilisation = @{}
+$uri = "https://graph.microsoft.com/beta/reports/servicePrincipalSignInActivities"
+
+while ($uri) {
+    $page = Invoke-MgGraphRequest -Method GET -Uri $uri
+    foreach ($activite in $page.value) {
+        $derniereUtilisation[$activite.appId] = $activite.lastSignInActivity.lastSignInDateTime
+    }
+    $uri = $page.'@odata.nextLink'
+}
+
+
+# --- 4. Analyse de chaque application ----------------------------------------
 
 foreach ($app in $applications) {
+
+    # Dernière utilisation de l'application (vide si aucune trace)
+    $date = $derniereUtilisation[$app.AppId]
+    if ($date) {
+        $utilisation = ([datetime]$date).ToString("dd/MM/yyyy")
+        $joursSansUtilisation = ($aujourdhui - [datetime]$date).Days
+    }
+    else {
+        $utilisation = "Aucune trace"
+        $joursSansUtilisation = ""
+    }
 
     # On rassemble les secrets et les certificats dans une seule liste
     $identifiants = @()
@@ -64,15 +98,17 @@ foreach ($app in $applications) {
     # apparaisse quand même dans la liste
     if ($identifiants.Count -eq 0) {
         $liste += [pscustomobject]@{
-            Statut        = "4 - Aucun secret"
-            Application   = $app.DisplayName
-            AppId         = $app.AppId
-            Type          = ""
-            Nom           = ""
-            Creation      = ""
-            Expiration    = ""
-            DureeEnJours  = ""
-            JoursRestants = ""
+            Statut               = "4 - Aucun secret"
+            Application          = $app.DisplayName
+            AppId                = $app.AppId
+            Type                 = ""
+            Nom                  = ""
+            Creation             = ""
+            Expiration           = ""
+            DureeEnJours         = ""
+            JoursRestants        = ""
+            DerniereUtilisation  = $utilisation
+            JoursSansUtilisation = $joursSansUtilisation
         }
         continue
     }
@@ -93,32 +129,33 @@ foreach ($app in $applications) {
         }
 
         $liste += [pscustomobject]@{
-            Statut        = $statut
-            Application   = $app.DisplayName
-            AppId         = $app.AppId
-            Type          = $id.Type
-            Nom           = $id.Nom
-            Creation      = $id.Debut.ToString("dd/MM/yyyy")
-            Expiration    = $id.Fin.ToString("dd/MM/yyyy")
-            DureeEnJours  = ($id.Fin - $id.Debut).Days
-            JoursRestants = ($id.Fin - $aujourdhui).Days    # négatif si expiré
+            Statut               = $statut
+            Application          = $app.DisplayName
+            AppId                = $app.AppId
+            Type                 = $id.Type
+            Nom                  = $id.Nom
+            Creation             = $id.Debut.ToString("dd/MM/yyyy")
+            Expiration           = $id.Fin.ToString("dd/MM/yyyy")
+            DureeEnJours         = ($id.Fin - $id.Debut).Days
+            JoursRestants        = ($id.Fin - $aujourdhui).Days    # négatif si expiré
+            DerniereUtilisation  = $utilisation
+            JoursSansUtilisation = $joursSansUtilisation
         }
     }
 }
 
 
-# --- 4. Affichage ------------------------------------------------------------
+# --- 5. Affichage ------------------------------------------------------------
 
 # Nombre de secrets par statut
 $liste | Group-Object Statut | Sort-Object Name | Select-Object Name, Count | Format-Table -AutoSize
 
 # Liste détaillée, triée par statut puis par application
 $liste = $liste | Sort-Object Statut, Application
-$liste | Format-Table Statut, Application, Type, Nom, Creation, Expiration, DureeEnJours -AutoSize
+$liste | Format-Table Statut, Application, Type, Expiration, DureeEnJours, DerniereUtilisation, JoursSansUtilisation -AutoSize
 
 
-# --- 5. Export CSV pour Excel (séparateur ";" et UTF-8 pour les accents) -----
+# --- 6. Export CSV pour Excel (séparateur ";" et UTF-8 pour les accents) -----
 
 $liste | Export-Csv -Path ".\audit-secrets-applications.csv" -NoTypeInformation -Encoding UTF8 -Delimiter ";"
 Write-Host "Export : $((Get-Location).Path)\audit-secrets-applications.csv"
-

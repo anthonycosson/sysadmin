@@ -31,15 +31,19 @@ Liste des points à traiter un par un pour renforcer un tenant. Cochez chaque po
 
 - [ ] **Auditer les secrets et certificats des applications (2 ans de validité max.)**
   - Pourquoi : un secret d'application est un mot de passe, souvent avec des droits larges.
-  - Script : [audit-secrets-applications.ps1](scripts/audit-secrets-applications.ps1). Il liste toutes les inscriptions d'applications du tenant et exporte un CSV.
-- [ ] **Traiter chaque ligne du CSV selon son statut**
+  - Script : [audit-secrets-applications.ps1](scripts/audit-secrets-applications.ps1). Il liste toutes les inscriptions d'applications du tenant avec leurs secrets, la **dernière utilisation** de chaque application, et exporte un CSV.
+  - Prérequis : licence **Entra ID P1** pour la dernière utilisation.
+- [ ] **Traiter chaque ligne du CSV selon son statut et sa dernière utilisation**
 
-  | Statut | Action |
-  |---|---|
-  | `1 - Expiré` | Supprimer le secret. Supprimer l'application si personne ne la réclame |
-  | `2 - Plus de 2 ans` | Créer un nouveau secret de 2 ans max., le mettre en place, **puis** supprimer l'ancien |
-  | `3 - OK` | Rien à faire |
-  | `4 - Aucun secret` | Normal si l'application ne fait que connecter des utilisateurs |
+  | Statut | Utilisée (< 90 jours) | Inutilisée (> 90 jours ou `Aucune trace`) |
+  |---|---|---|
+  | `1 - Expiré` | Le secret ne sert plus : le supprimer | Désactiver l'application, puis la supprimer |
+  | `2 - Plus de 2 ans` | Créer un nouveau secret de 2 ans max., le mettre en place, **puis** supprimer l'ancien | Supprimer le secret, désactiver puis supprimer l'application |
+  | `3 - OK` | Rien à faire | Désactiver puis supprimer l'application |
+  | `4 - Aucun secret` | Rien à faire, vérifier qu'elle a un propriétaire | Désactiver puis supprimer l'application |
+
+  - **Désactiver** : Applications d'entreprise → *application* → Propriétés → *Activée pour la connexion des utilisateurs* : `Non`. Attendre 30 à 60 jours que quelqu'un réclame avant de **supprimer** (restaurable pendant 30 jours).
+  - La dernière utilisation couvre toutes les connexions : par un utilisateur, par l'application seule ou en tant qu'API.
 
   Renouvellement : Entra ID → Inscriptions d'applications → *application* → Certificats et secrets.
 
