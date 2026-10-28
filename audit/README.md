@@ -12,6 +12,7 @@ Liste des points à traiter un par un pour renforcer un tenant. Cochez chaque po
 4. [💻 Appareils : Windows LAPS](#-4-appareils--windows-laps)
 5. [📧 Messagerie : SPF, DKIM, DMARC](#-5-messagerie--spf-dkim-dmarc)
 6. [📧 Messagerie : protection](#-6-messagerie--protection)
+7. [📧 Messagerie : listes de distribution](#-7-messagerie--listes-de-distribution)
 
 ## 💳 1. Achats en libre-service
 
@@ -134,3 +135,29 @@ Licence : pièces jointes fiables, liens fiables et protection des VIP demandent
 - [ ] **Exceptions de transfert** : une boîte qui doit vraiment transférer vers l'extérieur a sa propre stratégie anti-spam sortante, limitée à cette boîte
 - [ ] **Passer l'analyseur de configuration** : Defender → E-mail et collaboration → Stratégies et règles → Stratégies de menace → **Analyseur de configuration**
   - Objectif : aucun écart au niveau Standard, en dehors des choix assumés. À repasser après chaque modification.
+
+## 📧 7. Messagerie : listes de distribution
+
+Une liste ouverte à l'extérieur, comme `tous@contoso.com`, permet à n'importe qui sur Internet d'envoyer du spam ou de l'hameçonnage à toute l'entreprise en un seul e-mail.
+
+- [ ] **Lister les groupes qui acceptent les e-mails de l'extérieur**
+  - Script : [audit-listes-distribution-externes.ps1](scripts/audit-listes-distribution-externes.ps1). Il couvre les listes de distribution, les groupes de sécurité à extension messagerie et les groupes Microsoft 365, et exporte un CSV trié par nombre de membres.
+  - `ExpediteursRestreints = Oui` : seuls certains expéditeurs peuvent écrire au groupe, le risque est limité.
+  - Les groupes Microsoft 365 sont fermés à l'extérieur par défaut : ceux qui apparaissent ont été ouverts volontairement.
+- [ ] **Traiter chaque groupe**
+
+  | Situation | Action |
+  |---|---|
+  | Liste interne (`tous@`, `direction@`, `service-x@`) | Fermer à l'extérieur |
+  | Adresse publique légitime (`contact@`, `support@`, `recrutement@`) | Laisser ouverte |
+  | Ouverte pour quelques partenaires précis | Fermer, sauf aux partenaires : expéditeurs autorisés uniquement |
+
+  ```powershell
+  # Fermer une liste de distribution ou un groupe de sécurité à l'extérieur
+  Set-DistributionGroup -Identity "tous@contoso.com" -RequireSenderAuthenticationEnabled $true
+
+  # Fermer un groupe Microsoft 365 à l'extérieur
+  Set-UnifiedGroup -Identity "projet@contoso.com" -RequireSenderAuthenticationEnabled $true
+  ```
+
+  Toujours utiliser l'**adresse e-mail** du groupe comme `-Identity` : le nom peut exister en double et la commande échoue.
