@@ -138,12 +138,13 @@ Licence : pièces jointes fiables, liens fiables et protection des VIP demandent
 
 ## 📧 7. Messagerie : listes de distribution
 
-Une liste ouverte à l'extérieur, comme `tous@contoso.com`, permet à n'importe qui sur Internet d'envoyer du spam ou de l'hameçonnage à toute l'entreprise en un seul e-mail.
+Un groupe ouvert à l'extérieur, comme `tous@contoso.com`, permet à n'importe qui sur Internet d'envoyer du spam ou de l'hameçonnage à toute l'entreprise en un seul e-mail.
 
-- [ ] **Lister les groupes qui acceptent les e-mails de l'extérieur**
-  - Script : [audit-listes-distribution-externes.ps1](scripts/audit-listes-distribution-externes.ps1). Il couvre les listes de distribution, les groupes de sécurité à extension messagerie et les groupes Microsoft 365, et exporte un CSV trié par nombre de membres.
+- [ ] **Lister tous les groupes de messagerie et ceux qui acceptent l'extérieur**
+  - Script : [audit-listes-distribution-externes.ps1](scripts/audit-listes-distribution-externes.ps1). Il liste **tous** les groupes avec une adresse e-mail : équipes Teams, groupes Microsoft 365, listes de distribution (classiques et dynamiques), groupes de sécurité à extension messagerie.
+  - `AccepteExterieur = Oui` : n'importe qui sur Internet peut écrire au groupe. Le CSV les affiche en premier, les plus grands en haut.
   - `ExpediteursRestreints = Oui` : seuls certains expéditeurs peuvent écrire au groupe, le risque est limité.
-  - Les groupes Microsoft 365 sont fermés à l'extérieur par défaut : ceux qui apparaissent ont été ouverts volontairement.
+  - Les équipes Teams et groupes Microsoft 365 sont fermés à l'extérieur par défaut : ceux à `Oui` ont été ouverts volontairement.
 - [ ] **Traiter chaque groupe**
 
   | Situation | Action |
@@ -156,8 +157,11 @@ Une liste ouverte à l'extérieur, comme `tous@contoso.com`, permet à n'importe
   # Fermer une liste de distribution ou un groupe de sécurité à l'extérieur
   Set-DistributionGroup -Identity "tous@contoso.com" -RequireSenderAuthenticationEnabled $true
 
-  # Fermer un groupe Microsoft 365 à l'extérieur
+  # Fermer une équipe Teams ou un groupe Microsoft 365 à l'extérieur
   Set-UnifiedGroup -Identity "projet@contoso.com" -RequireSenderAuthenticationEnabled $true
+
+  # Fermer une liste de distribution dynamique à l'extérieur
+  Set-DynamicDistributionGroup -Identity "lyon@contoso.com" -RequireSenderAuthenticationEnabled $true
   ```
 
   Toujours utiliser l'**adresse e-mail** du groupe comme `-Identity` : le nom peut exister en double et la commande échoue.
