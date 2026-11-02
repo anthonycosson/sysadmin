@@ -31,7 +31,7 @@ Les autorisations de partage s'appliquent lorsque le dossier est accessible via 
 
 Les autorisations NTFS sur les fichiers et dossiers dans Windows peuvent être gérées à l'aide de l'interface graphique de l'Explorateur de fichiers sous l'onglet Sécurité. 
 
-Outre l'interface graphique, nous pouvons également atteindre un niveau de granularité élevé sur les autorisations de fichiers NTFS dans Windows à partir de la ligne de commande à l'aide de l'utilitaire `icacls`. 
+Outre l'interface graphique, il est possible d'atteindre un niveau de granularité élevé sur les autorisations de fichiers NTFS dans Windows à partir de la ligne de commande à l'aide de l'utilitaire `icacls`. 
 
 Le niveau d'accès aux ressources est répertorié après chaque utilisateur. Les paramètres d'héritage possibles sont :
 
@@ -54,11 +54,11 @@ Les autorisations d'accès de base sont les suivantes :
 * N :  no access
 
 
-En utilisant la commande `icacls c:\users /grant joe:f`, nous pouvons accorder à l'utilisateur joe un contrôle total sur le répertoire.
+La commande `icacls c:\users /grant joe:f` accorde à l'utilisateur joe un contrôle total sur le répertoire.
 
 Mais étant donné que (oi) et (ci) n'ont pas été inclus dans la commande iln'aura que des droits sur le dossier c:\users, mais pas sur les sous-répertoires de l'utilisateur et les fichiers qu'ils contiennent.
 
-Pour supprimer les droits on utile la commande `icacls c:\users /remove joe`.
+Pour supprimer les droits, utiliser la commande `icacls c:\users /remove joe`.
 
 ## Gestion des partages 
 

@@ -10,9 +10,9 @@
 
 ## Execution Policy
 
-Parfois, nous constaterons que nous sommes incapables d'exécuter des scripts sur un système. Cela est dû à une fonctionnalité de sécurité appelée politique d'exécution, qui tente d'empêcher l'exécution de scripts malveillants. Les politiques possibles sont :
+Il arrive qu'un système refuse d'exécuter des scripts. Cela est dû à une fonctionnalité de sécurité appelée politique d'exécution, qui tente d'empêcher l'exécution de scripts malveillants. Les politiques possibles sont :
 
-* AllSigned : Tous les scripts peuvent être exécutés, mais un éditeur de confiance doit signer des scripts et des fichiers de configuration. Cela inclut à la fois des scripts distants et locaux. Nous recevons une invite avant d'exécuter des scripts signés par des éditeurs que nous n'avons pas encore répertoriés comme fiables ou non.
+* AllSigned : Tous les scripts peuvent être exécutés, mais un éditeur de confiance doit signer des scripts et des fichiers de configuration. Cela inclut à la fois des scripts distants et locaux. Une invite s'affiche avant d'exécuter des scripts signés par des éditeurs pas encore répertoriés comme fiables ou non.
 * Bypass : Aucun script ou fichier de configuration n'est bloqué, et l'utilisateur ne reçoit aucun avertissement ou invite.
 * Default : Cela définit la politique d'exécution par défaut, Restricted for Windows desktop machines et RemoteSigned for Windows servers.
 * RemoteSigned : Les scripts peuvent s'exécuter mais nécessitent une signature numérique sur les scripts qui sont téléchargés à partir d'Internet. Les signatures numériques ne sont pas nécessaires pour les scripts écrits localement.

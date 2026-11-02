@@ -15,7 +15,7 @@ L'accès distant peut se faire via telnet, ssh, PsExec, WinRM, RDP.
 
 Quelques commandes utiles : 
 
-* help : Suivi du nom de la commande pour laquelle on veut obtenir de l'aide
+* help : Suivi du nom de la commande dont afficher l'aide
 * cls : Pour effacer ce qu'il y a l'écran du terminal
 * dir : Permet de lister les dossiers et fichiers
 * ipconfig : Permet d'afficher la configuration IP. Il est possible d'ajouter /all pour plus de détails

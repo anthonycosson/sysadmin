@@ -2,7 +2,7 @@
 
 ## Installation du système
 
-1. Pas de swap au moment du partitionnement des disques. Cela sera fait plus tard pour éviter les problèmes si un jour on veut étendre une partition.
+1. Pas de swap au moment du partitionnement des disques. Cela sera fait plus tard pour éviter les problèmes s'il faut un jour étendre une partition.
 2. Installation de :
     - Serveur SSH
     - utilitaires usuels du système

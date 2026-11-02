@@ -45,7 +45,7 @@ Le chemin d'accès à l'exécutable est le chemin d'accès complet au programme 
 
 La plupart des services fonctionnent avec les privilèges LocalSystem par défaut, ce qui est le niveau d'accès le plus élevé autorisé sur un système d'exploitation Windows individuel. 
 
-Toutes les applications n'ont pas besoin d'autorisations au niveau du compte du système local, il est donc bénéfique d'effectuer des recherches au cas par cas lorsque vous envisagez d'installer de nouvelles applications dans un environnement Windows. 
+Toutes les applications n'ont pas besoin d'autorisations au niveau du compte du système local, il est donc bénéfique d'effectuer des recherches au cas par cas avant d'installer de nouvelles applications dans un environnement Windows. 
 
 Comptes de service intégrés notables dans Windows : 
 
@@ -68,6 +68,6 @@ Chaque objet nommé dans Windows est un objet sécurisable, et même certains ob
 
 ## Examine service permissions using PowerShell
 
-À l'aide de l'applet de commande `Get-Acl` PowerShell, nous pouvons examiner les autorisations de service en ciblant le chemin d'accès d'un service spécifique dans le registre.
+À l'aide de l'applet de commande `Get-Acl` PowerShell, il est possible d'examiner les autorisations d'un service en ciblant le chemin d'accès d'un service spécifique dans le registre.
 
-Cette commande renvoie des autorisations de compte spécifiques dans un format facile à lire et en SDDL. De plus, le SID qui représente chaque principal de sécurité (utilisateur et/ou groupe) est présent dans la SDDL. C'est quelque chose que nous n'ocentons pas lors de l'exécution de sc à partir de l'invite de commande.
+Cette commande renvoie des autorisations de compte spécifiques dans un format facile à lire et en SDDL. De plus, le SID qui représente chaque principal de sécurité (utilisateur et/ou groupe) est présent dans la SDDL. Ce n'est pas le cas lors de l'exécution de sc à partir de l'invite de commande.

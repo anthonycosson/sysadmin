@@ -38,9 +38,9 @@ Les commandes à retenir sont donc celles qui vont permettre de manipuler l’en
 
 `docker ps` : Affiche tout les conteneurs actifs.
 
-Pour lancer une image (un service) dans un conteneur il suffit de faire un `docker run` de celle-ci avec quelques arguments supplémentaires qu’il faudra retaper à chaque fois qu’on voudra démarrer le conteneur. 
+Pour lancer une image (un service) dans un conteneur il suffit de faire un `docker run` de celle-ci avec quelques arguments supplémentaires à retaper à chaque démarrage du conteneur. 
 
-Ce n’est pas pratique, on ne peut déployer qu’un seul conteneur en même temps et ça n’est pas possible de standardiser les déploiements. Il faut donc utiliser docker compose
+Ce n’est pas pratique : un seul conteneur peut être déployé à la fois et ça n’est pas possible de standardiser les déploiements. Il faut donc utiliser docker compose
 
 # Docker compose
 
@@ -53,7 +53,7 @@ Ce fichier contient les éléments suivants  :
 - name : Permet de définir le nom du projet / de la stack
 - services : Permet de définir les services à lancer
 - volumes : Permet de définir ou seront stocker les données persistante
-- networks : Permet de définir à quel réseaux appartiennent nos service.
+- networks : Permet de définir à quels réseaux appartiennent les services.
 
 L’ensembles de ces éléments ne sont pas obligatoire à chaque fois mais il est fortement recommandé de les renseigner pour une meilleurs maitrise des déploiements.
 
@@ -64,7 +64,7 @@ L’ensembles de ces éléments ne sont pas obligatoire à chaque fois mais il e
 
 ## Attributs
 
-Chaque Top Level Elements contient des attributs que nous allons détailler ici :
+Chaque Top Level Elements contient les attributs suivants :
 
 ### Name
 
@@ -80,7 +80,7 @@ user : permet de définir un autre utilisateur que root pour exécuter le conten
 
 environnement : quelques variables d’environnement particulière
 
-volumes : volumelocal:/dossierduconteneur (Pas besoin de définir le prefix de la stack, il sera ajouté automatiquement grace au “name”). On peut aussi faire un mount bind qui permet de monter un partage un volume complétement indépendant de docker.
+volumes : volumelocal:/dossierduconteneur (Pas besoin de définir le prefix de la stack, il sera ajouté automatiquement grace au “name”). Il est aussi possible de faire un mount bind qui permet de monter un partage un volume complétement indépendant de docker.
 
 networks : définit a quel réseau doit appartenir le conteneur. Il faut choisir parmit les réseau déclarer à la fin du fichier.
 
@@ -92,20 +92,20 @@ restart : permet de définir les options au moment du redémarrage de l’hote.
 
 Permet de déclarer les volumes à créer ou utiliser pour la stack.
 
-Si on peut que le volume se crée automatiquement il suffit de mettre “nomduvolumelocal:” et celui sera créé automatiquement au format “nomdelastack_nomduconteneur”.
+Pour que le volume se crée automatiquement, il suffit de mettre “nomduvolumelocal:” et celui sera créé automatiquement au format “nomdelastack_nomduconteneur”.
 
 name : Permet de définir un nom manuellement
 
-external : Permet de dire qu’on ne doit pas créer le volume car il existe déjà. un message d’erreur apparaitra si ça n’est pas le cas.
+external : Indique que le volume ne doit pas être créé car il existe déjà. un message d’erreur apparaitra si ça n’est pas le cas.
 
 ### Networks :
 
 Permet déclarer les réseaux à créer ou utiliser pour la stack.
 
-default : permet de définir le réseau par défaut si on ne configure rien mais on peut aussi le configurer. On peut aussi mettre le nom d’un autre réseau si on veut partager des réseaux entre conteneurs.
+default : permet de définir le réseau par défaut quand rien n’est configuré ; il peut aussi être configuré. Le nom d’un autre réseau permet de partager un réseau entre conteneurs.
 
 name : permet de définir le nom qui sera afficher dans docker.
 
-driver : permet de définir si on veut que ce soit un réseau Bridge, host, none.
+driver : permet de choisir un réseau Bridge, host ou none.
 
 enable_ipv4/6 : true or false pour activer ou pas l’ipv4 ou 6.

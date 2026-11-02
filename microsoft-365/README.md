@@ -7,10 +7,12 @@
 
 ## 📧 Exchange Online
 
-- [export-mailbox.ps1](exchange-online/export-mailbox.ps1) : exporter la liste des boîtes utilisateurs et partagées avec leur taille
+- [exporter-boites-aux-lettres.ps1](exchange-online/exporter-boites-aux-lettres.ps1) : exporter la liste des boîtes utilisateurs et partagées avec leur taille
 
 ## 📁 SharePoint
 
-- [clean-sharepoint.ps1](sharepoint/clean-sharepoint.ps1) : limiter et purger l'historique des versions de fichiers d'un site avec PnP PowerShell
+- [purger-versions-sharepoint.ps1](sharepoint/purger-versions-sharepoint.ps1) : limiter et purger l'historique des versions de fichiers d'un site avec PnP PowerShell
 
-> 🛡️ Le renforcement du tenant est dans le dossier [audit](../audit/).
+## 🛡️ Sécurisation du tenant
+
+- [Sécuriser un tenant Microsoft 365](securisation-tenant/) : liste des points à traiter, avec les scripts d'audit et de configuration
