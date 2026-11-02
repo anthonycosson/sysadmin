@@ -14,7 +14,10 @@ Consignes pour écrire et ranger les notes de ce dépôt.
 ## Nommage
 
 - Dossiers et fichiers **en français, en minuscules, séparés par des tirets** (ex. `partages-et-permissions.md`, `exporter-boites-aux-lettres.ps1`).
-- Le nom d'un script commence par ce qu'il fait (`audit-`, `configurer-`, `desactiver-`, `exporter-`…).
+- **Aucun accent ni caractère spécial** dans les noms (`reseau`, pas `réseau`) : macOS et Linux n'encodent pas les accents de la même façon, et ils deviennent illisibles dans les URL. Les accents restent normaux dans le contenu des fichiers.
+- Les noms d'outils et de produits gardent leur nom d'origine (`nmap`, `robocopy`, `proxmox`).
+- **Notes : le sujet d'abord, l'action ensuite** (`debian-installation.md`, `proxmox-creer-une-vm.md`, `smtp-tester-avec-telnet.md`). Le tri alphabétique regroupe ainsi les notes d'un même sujet.
+- **Scripts : le verbe d'abord** (`audit-`, `configurer-`, `desactiver-`, `exporter-`…), comme la convention PowerShell `Verbe-Nom` : un script se cherche par ce qu'il fait.
 
 ## Ton
 

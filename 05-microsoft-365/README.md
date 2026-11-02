@@ -3,7 +3,7 @@
 ## 🔑 Entra ID
 
 - [Kerberos Cloud](entra/kerberos-cloud.md) : créer l'objet serveur AzureADKerberos dans l'AD (Windows Hello for Business, clés FIDO2)
-- [Resynchroniser un compte AD et Entra](entra/resynchroniser-compte-ad-entra.md) : corriger un doublon via l'ImmutableID et `mS-DS-ConsistencyGUID`
+- [Resynchroniser un compte AD et Entra](entra/ad-entra-resynchroniser-un-compte.md) : corriger un doublon via l'ImmutableID et `mS-DS-ConsistencyGUID`
 
 ## 📧 Exchange Online
 
