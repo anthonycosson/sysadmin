@@ -19,7 +19,7 @@ Le standard actuel est .pem ou .pfx du coté de Windows.
 Répondre aux questions suivantes :
 
 * **Country name** : FR
-* **State or Province** : Ile-de-france
+* **State or Province** : Paris
 * **Locality name** : Paris
 * **Organization Name** : Le nom du client
 * **Organization Unit Name** : IT Department 
