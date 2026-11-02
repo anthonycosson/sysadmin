@@ -24,4 +24,4 @@
 ## 🧰 Outils
 
 - [Robocopy](robocopy.md) : copie et synchronisation de dossiers
-- [Surveiller les pertes de paquets](surveiller-pertes-de-paquets.md) : ping horodaté dans un fichier
+- [Surveiller les pertes de paquets](ping-surveiller-pertes-de-paquets.md) : ping horodaté dans un fichier
