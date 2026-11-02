@@ -2,7 +2,7 @@
 
 ## Security Identifier (SID)
 
-Chacun des principaux de sécurité du système a un identifiant de sécurité unique (SID). Le système génère automatiquement des SID. Cela signifie que même si, par exemple, nous avons deux utilisateurs identiques sur le système, Windows peut distinguer les deux et leurs droits en fonction de leurs SID. Les SID sont des valeurs de chaîne de différentes longueurs, qui sont stockées dans la base de données de sécurité. Ces SID sont ajoutés au jeton d'accès de l'utilisateur pour identifier toutes les actions que l'utilisateur est autorisé à entreprendre.
+Chacun des principaux de sécurité du système a un identifiant de sécurité unique (SID). Le système génère automatiquement des SID. Cela signifie que même avec, par exemple, deux utilisateurs identiques sur le système, Windows peut distinguer les deux et leurs droits en fonction de leurs SID. Les SID sont des valeurs de chaîne de différentes longueurs, qui sont stockées dans la base de données de sécurité. Ces SID sont ajoutés au jeton d'accès de l'utilisateur pour identifier toutes les actions que l'utilisateur est autorisé à entreprendre.
 
 Un SID se compose de l'autorité d'identification et de l'ID relatif (RID). Dans un environnement de domaine Active Directory (AD), le SID inclut également le SID de domaine.
 
@@ -20,17 +20,17 @@ En plus du SID, ces jetons d'accès contiennent d'autres informations relatives 
 
 Le contrôle du compte d'utilisateur (UAC) est une fonctionnalité de sécurité de Windows pour empêcher les logiciels malveillants d'exécuter ou de manipuler des processus qui pourraient endommager l'ordinateur ou son contenu. 
 
-Il y a le mode d'approbation de l'administrateur dans UAC, qui est conçu pour empêcher l'installation de logiciels indésirables à l'insu de l'administrateur ou pour empêcher que des modifications ne soient apportées à l'échelle du système. Vous avez sûrement déjà vu l'invite de consentement si vous avez installé un logiciel spécifique, et votre système a demandé une confirmation si vous voulez qu'il soit installé. Étant donné que l'installation nécessite des droits d'administrateur, une fenêtre s'affiche, vous demandant si vous souhaitez confirmer l'installation. 
+Il y a le mode d'approbation de l'administrateur dans UAC, qui est conçu pour empêcher l'installation de logiciels indésirables à l'insu de l'administrateur ou pour empêcher que des modifications ne soient apportées à l'échelle du système. Lors de l'installation de certains logiciels, l'invite de consentement apparaît : comme l'installation nécessite des droits d'administrateur, une fenêtre demande de confirmer l'installation. 
 
-Avec un utilisateur standard qui n'a aucun droit pour l'installation, l'exécution sera refusée, ou on vous demandera le mot de passe de l'administrateur. Cette invite de consentement interrompt l'exécution de scripts ou de binaires que les logiciels malveillants ou les attaquants tentent d'exécuter jusqu'à ce que l'utilisateur entre le mot de passe ou confirme l'exécution.
+Avec un utilisateur standard qui n'a aucun droit pour l'installation, l'exécution est refusée, ou le mot de passe de l'administrateur est demandé. Cette invite de consentement interrompt l'exécution de scripts ou de binaires que les logiciels malveillants ou les attaquants tentent d'exécuter jusqu'à ce que l'utilisateur entre le mot de passe ou confirme l'exécution.
 
 ## Registry 
 
 Le registre est une base de données hiérarchique dans Windows critique pour le système d'exploitation. Il stocke les paramètres de bas niveau pour le système d'exploitation Windows et les applications qui choisissent de l'utiliser. 
 
-Il est divisé en données spécifiques à l'ordinateur et en données spécifiques à l'utilisateur. Nous pouvons ouvrir l'éditeur de registre en tapant `regedit` à partir de la ligne de commande ou de la barre de recherche Windows.
+Il est divisé en données spécifiques à l'ordinateur et en données spécifiques à l'utilisateur. L'éditeur de registre s'ouvre en tapant `regedit` à partir de la ligne de commande ou de la barre de recherche Windows.
 
-L'ensemble du registre du système est stocké dans plusieurs fichiers sur le système d'exploitation. Vous pouvez les trouver sous `C:\Windows\System32\Config\`.
+L'ensemble du registre du système est stocké dans plusieurs fichiers sur le système d'exploitation. Ils se trouvent sous `C:\Windows\System32\Config\`.
 
 
 ## Run and RunOnce Registry Keys
@@ -53,7 +53,7 @@ https://learn.microsoft.com/en-us/windows/security/application-security/applicat
 
 La stratégie de groupe permet aux administrateurs de définir, de configurer et d'ajuster une variété de paramètres. Dans un environnement de domaine, les stratégies de groupe sont poussées vers le bas à partir d'un contrôleur de domaine sur toutes les machines liées au domaine auxquelles les objets de stratégie de groupe (GPO) sont liés. Ces paramètres peuvent également être définis sur des machines individuelles à l'aide de la stratégie de groupe local.
 
-Nous pouvons ouvrir l'éditeur de stratégie de groupe local en ouvrant le menu Démarrer et en tapant `gpedit.msc`. L'éditeur est divisé en deux catégories sous la politique informatique locale - Configuration de l'ordinateur et Configuration de l'utilisateur.
+L'éditeur de stratégie de groupe local s'ouvre depuis le menu Démarrer en tapant `gpedit.msc`. L'éditeur est divisé en deux catégories sous la politique informatique locale - Configuration de l'ordinateur et Configuration de l'utilisateur.
 
 ## Windows Defender Antivirus
 

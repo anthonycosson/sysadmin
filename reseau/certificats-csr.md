@@ -24,16 +24,16 @@ Répondre aux questions suivantes :
 * **Organization Name** : Le nom du client
 * **Organization Unit Name** : IT Department 
 * **Common name** : le FQDN complet ou le wildcard (exemple : sous-domaine.domaine.tld ou *.domaine.tld)
-* **Email** : On laisse vide
-* **Password** : On laisse vide
-* **Optional Compagny Name** : On laisse vide
+* **Email** : laisser vide
+* **Password** : laisser vide
+* **Optional Company Name** : laisser vide
 
 
 Attention, en plus du .CSR il est important de garder le fichier .key.
 
 ## Créer un .PFX en intégrant le .crt, le .key et .pem dedans 
 
-Pour cela il faut récupérer le certificat .crt puis le fichier .key qui a été généré en même temps que le CSR dans le même répertoire ou l'on exécute la commande ci-dessous : 
+Pour cela il faut récupérer le certificat .crt puis le fichier .key qui a été généré en même temps que le CSR dans le même répertoire, puis exécuter la commande ci-dessous : 
 
  `openssl pkcs12 -export -out domain.name.pfx -inkey domain.name.key -in domain.name.crt -certfile domain.name.pem`
 
@@ -44,7 +44,7 @@ Pour cela il faut récupérer le certificat .crt puis le fichier .key qui a ét�
 
 `cat domain.name.crt domain.name.pem > fullchain.pem`
 
-Aujourd'hui le standard est le .pem mais on peut aussi le mettre en .crt aussi.
+Aujourd'hui le standard est le .pem mais l'extension .crt fonctionne aussi.
 
 
 

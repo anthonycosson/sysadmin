@@ -1,6 +1,6 @@
-# 🛡️ Audit : sécuriser un tenant Microsoft 365
+# 🛡️ Sécuriser un tenant Microsoft 365
 
-Liste des points à traiter un par un pour renforcer un tenant. Cochez chaque point une fois fait et vérifié. Les scripts sont dans [scripts/](scripts/).
+Liste des points à traiter un par un pour renforcer un tenant. Chaque point se coche une fois fait et vérifié. Les scripts sont dans [scripts/](scripts/).
 
 **Prérequis :** un compte Administrateur global et PowerShell 7. Chaque script installe et importe le module dont il a besoin.
 
@@ -24,7 +24,7 @@ Liste des points à traiter un par un pour renforcer un tenant. Cochez chaque po
 ## 👤 2. Identités
 
 - [ ] **Désactiver le viral sign-up**
-  - Pourquoi : n'importe qui avec une adresse de votre domaine peut rejoindre le tenant ou s'inscrire à un abonnement, sans qu'un administrateur ait créé le compte.
+  - Pourquoi : n'importe qui avec une adresse du domaine peut rejoindre le tenant ou s'inscrire à un abonnement, sans qu'un administrateur ait créé le compte.
   - Script : [desactiver-viral-signup.ps1](scripts/desactiver-viral-signup.ps1)
   - Vérification : `AllowEmailVerifiedUsersToJoinOrganization` et `AllowedToSignUpEmailBasedSubscriptions` sont à `False`.
 
@@ -48,7 +48,7 @@ Liste des points à traiter un par un pour renforcer un tenant. Cochez chaque po
 
   **⚠️ Applications créées automatiquement par Microsoft : ne pas supprimer ni modifier**, même si leur secret dépasse 2 ans : il est géré par Microsoft. Le script les exclut par leur nom (liste `$applicationsMicrosoft` en haut du script, à compléter au fil des clients).
 
-  | Application | Rôle | Si on la supprime |
+  | Application | Rôle | En cas de suppression |
   |---|---|---|
   | `P2P Server` | Créée par Windows et Entra ID pour l'authentification entre postes joints à Entra ID, notamment le **Bureau à distance avec un compte Entra** | Le Bureau à distance entre postes joints à Entra ID ne fonctionne plus |
   | `SharePoint Online Client Extensibility Web Application Principal` et `… Helper` | Créées par SharePoint pour que les solutions **SharePoint Framework (SPFx)** appellent des API (Graph, API maison). Leurs autorisations se contrôlent dans SharePoint → Avancé → **Accès aux API** | Les WebParts et extensions SPFx qui appellent une API cessent de fonctionner |
@@ -93,7 +93,7 @@ Prérequis : postes joints à Entra ID (ou hybrides), **Windows 11 24H2** pour l
 À faire pour **chaque domaine** qui envoie des e-mails.
 
 - [ ] **SPF** : enregistrement TXT `@` = `v=spf1 include:spf.protection.outlook.com -all`
-  - Un seul enregistrement par domaine. Ajouter les autres services qui envoient avec votre domaine (outil d'e-mailing, CRM…).
+  - Un seul enregistrement par domaine. Ajouter les autres services qui envoient avec le domaine (outil d'e-mailing, CRM…).
 - [ ] **DKIM** : créer la configuration, puis les deux CNAME `selector1._domainkey` et `selector2._domainkey`, puis l'activer
 
   ```powershell

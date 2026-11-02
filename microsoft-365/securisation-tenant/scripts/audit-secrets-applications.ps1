@@ -2,12 +2,12 @@
 #  Audit des secrets et certificats des applications inscrites dans Entra ID
 # =============================================================================
 #
-#  Ce script liste TOUTES les applications créées dans notre tenant
+#  Ce script liste TOUTES les applications créées dans le tenant
 #  (Entra ID > Inscriptions d'applications) avec leurs secrets et certificats.
 #  Les applications Microsoft et les applications tierces ne sont pas listées,
 #  ni les applications que Microsoft crée automatiquement dans le tenant
 #  (liste $applicationsMicrosoft plus bas, par nom car l'ID change d'un client
-#  à l'autre). Leurs secrets sont gérés par Microsoft : on n'y touche pas.
+#  à l'autre). Leurs secrets sont gérés par Microsoft : ne pas y toucher.
 #
 #  Chaque secret ou certificat reçoit un statut :
 #
@@ -54,7 +54,7 @@ $liste = @()
 
 foreach ($app in $applications) {
 
-    # On rassemble les secrets et les certificats dans une seule liste
+    # Rassembler les secrets et les certificats dans une seule liste
     $identifiants = @()
 
     foreach ($secret in $app.PasswordCredentials) {
@@ -95,7 +95,7 @@ foreach ($app in $applications) {
     # Une ligne par secret ou certificat
     foreach ($id in $identifiants) {
 
-        # Statut : on teste d'abord l'expiration, puis la durée
+        # Statut : tester d'abord l'expiration, puis la durée
         # (Debut + 2 ans plutôt que 730 jours, pour ne pas compter les années bissextiles)
         if ($id.Fin -lt $aujourdhui) {
             $statut = "1 - Expiré"

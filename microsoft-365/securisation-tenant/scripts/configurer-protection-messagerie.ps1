@@ -29,7 +29,7 @@ $vip = @(
 )
 
 # Domaines externes à protéger (banque, fournisseurs, clients clés)
-# Nos propres domaines sont protégés automatiquement
+# Les domaines du tenant sont protégés automatiquement
 $domainesPartenaires = @("partenaire.com", "banque.fr")
 
 $quarantaine = "Quarantaine - Demande de libération"

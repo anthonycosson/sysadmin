@@ -91,7 +91,7 @@ foreach ($groupe in $groupes) {
     if ($groupe.AcceptMessagesOnlyFromSendersOrMembers.Count -gt 0) { $restreint = "Oui" } else { $restreint = "Non" }
 
     # Nombre de membres (requête par groupe, peut prendre un peu de temps)
-    # On utilise l'adresse e-mail, unique, et non le nom qui peut exister en double
+    # Utiliser l'adresse e-mail, unique, et non le nom qui peut exister en double
     $membres = @(Get-DistributionGroupMember -Identity $groupe.PrimarySmtpAddress -ResultSize Unlimited).Count
 
     $liste += [pscustomobject]@{
